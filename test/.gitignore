@@ -1,3 +1,4 @@
 *.o
 tests
 obj_dir_*
+*.a

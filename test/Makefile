@@ -1,29 +1,34 @@
 
-# C Bits
+# Build Procedure
+#
+# - Create Unity library
+# - Create test EXEs
+# - Run test EXEs
 
-CC ?= gcc
-CFLAGS += -g -Og -Iunity
-
-vpath %.c unity fifo .
-
-TEST_SRC := fifo.c 
-UNITY_SRC := unity.c unity_fixture.c unity_memory.c
-
-SRC  := test_main.c $(TEST_SRC) $(UNITY_SRC)
-OBJ  := $(SRC:.c=.o)
-
-VSRC := fifo.v
+PROJECTS:=fifo
 
 .PHONY: all
-all: tests
-	./tests
+all: lib build run
 
-include vlibs.mk
+.PHONY: lib
+lib: 
+	make -f unity.mk
 
-tests: $(OBJ) | $(VOBJ_DIR)
-	$(CC) $^ -o $@ $(LDFLAGS) $(CFLAGS)
+.PHONY: build
+build:
+	for p in $(PROJECTS) ; do \
+		cd $$p && make ; \
+	done
+
+.PHONY: run
+run:
+	for p in $(PROJECTS) ; do \
+		cd $$p && make run ; \
+	done
 
 .PHONY: clean
-clean: vlibs_clean
-	rm $(OBJ)
-	rm tests
+clean: 
+	make -f unity.mk unity_clean
+	for p in $(PROJECTS) ; do \
+		cd $$p && make clean ; \
+	done

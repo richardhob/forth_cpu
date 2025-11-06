@@ -2,6 +2,9 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
+#include "verilated.h"
+#include "Vfifo.h"
+
 TEST_GROUP(fifo);
 
 TEST_SETUP(fifo) 
