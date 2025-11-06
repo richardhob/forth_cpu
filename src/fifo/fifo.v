@@ -15,7 +15,7 @@ output reg [WIDTH-1:0] o_data;
 output reg o_done;
 initial o_done = 1;
 
-reg [DEPTH-1:0] _data [WIDTH-1:0];
+reg [WIDTH-1:0] _data [DEPTH-1:0];
 
 reg [$clog2(DEPTH)-1:0] _i_pointer;
 initial _i_pointer = 0;
