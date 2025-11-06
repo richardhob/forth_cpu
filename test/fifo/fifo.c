@@ -81,6 +81,7 @@ TEST_GROUP_RUNNER(fifo)
 {
     RUN_TEST_CASE(fifo, test_push_and_pop);
     RUN_TEST_CASE(fifo, test_push_and_none);
+    RUN_TEST_CASE(fifo, test_none_and_pop);
 }
 
 TEST(fifo, test_push_and_pop)
@@ -118,6 +119,28 @@ TEST(fifo, test_push_and_none)
 
     tb->i_data = 0;
     tb->i_cmd = CMD_NONE;
+    tick();
+
+    for (int i = 0; i < FIFO_DEPTH; i++)
+    {
+        TEST_ASSERT_EQUAL(0, tb->o_data);
+        tick();
+    }
+}
+
+TEST(fifo, test_none_and_pop)
+{
+    // trace->open("test_none_and_pop");
+
+    tb->i_cmd = CMD_NONE;
+    for (int i = 0; i < FIFO_DEPTH; i++)
+    {
+        tb->i_data = i;
+        tick();
+    }
+
+    tb->i_data = 0;
+    tb->i_cmd = CMD_POP;
     tick();
 
     for (int i = 0; i < FIFO_DEPTH; i++)
