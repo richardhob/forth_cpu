@@ -1,3 +1,4 @@
 *.swp
 *.tgz
 oss-cad-suite/
+obj_dir/
