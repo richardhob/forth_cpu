@@ -24,7 +24,7 @@ build: obj_dir/Vfifo
 	cd .. && make -f unity.mk
 
 obj_dir/Vfifo: $(VSRC) $(SRC) | ../libunity.a
-	verilator $^ --binary --exe --trace -CFLAGS "$(CFLAGS)" -LDFLAGS "$(LDFLAGS)"
+	verilator $^ --cc --build --exe --trace --timing -CFLAGS "$(CFLAGS)" -LDFLAGS "$(LDFLAGS)"
 
 .PHONY: clean
 clean:
