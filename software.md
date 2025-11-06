@@ -23,7 +23,43 @@ source ./oss-cad-suite/environment
 
 ## Verilator
 
-...
+Verilator converts a `verilog` file and generates `c` files, as well as a
+Makefile. There are a few ways to use verilator ... but how I want to use it is
+to include Verilated C libraries into our test executable, and run all the tests
+for the hardware at once. 
+
+References / Links:
+
+- [Verilator CLI Args](https://verilator.org/guide/latest/exe_verilator.html)
+- [Notes on Verilating](https://github.com/verilator/verilator/blob/master/docs/guide/verilating.rst)
+
+In short, we can generate a number of C files and a Makefile using the `--cc`
+option:
+
+``` bash
+verilator --cc fifo.v
+```
+
+The default output directory is `obj_dir`. We can change this using the `--Mdir`
+option:
+
+``` bash
+verilator --cc fifo.v --Mdir obj_dir_fifo
+```
+
+Once the C source is generated, we can use Make to build it:
+
+``` bash
+cd obj_dir_fifo/
+make -f Vfifo.mk
+```
+
+This builds two libraries: 
+
+- `libverilated.a` 
+- `libVfifo.a`
+
+I believe that `libverilated.a` is the same across modules? 
 
 ## SBY
 
