@@ -33,33 +33,34 @@ References / Links:
 - [Verilator CLI Args](https://verilator.org/guide/latest/exe_verilator.html)
 - [Notes on Verilating](https://github.com/verilator/verilator/blob/master/docs/guide/verilating.rst)
 
-In short, we can generate a number of C files and a Makefile using the `--cc`
-option:
+Building with Verilator is annoying. It is easiest to use the `--exe` arg with
+the `--build` option to actually get the thing to build. And `--cc` to generate
+the C files. When building with your own main file, you can list the C and V
+files to include directly:
 
 ``` bash
-verilator --cc fifo.v
+verilator fifo.v main.c --build --exe --cc
 ```
 
-The default output directory is `obj_dir`. We can change this using the `--Mdir`
-option:
+You also have to include the `CFLAGS` and `LDFLAGS` if you need any of those.
+These flags, if they include paths, should probably be "absolute" instead of "relative":
 
 ``` bash
-verilator --cc fifo.v --Mdir obj_dir_fifo
+verilator fifo.v main.c --build --exe -CFLAGS "..." -LDFLAGS "..."
 ```
 
-Once the C source is generated, we can use Make to build it:
+The only V file that is needed is the Top V file. To add paths to the Verilog
+search path, use `-y`:
 
 ``` bash
-cd obj_dir_fifo/
-make -f Vfifo.mk
+verilator ... -y /usr/local/share/verilog/
 ```
 
-This builds two libraries: 
+What's neat about `-y` is that this directory will be searched for C files as
+well as verilog files? Kinda Neat?
 
-- `libverilated.a` 
-- `libVfifo.a`
-
-I believe that `libverilated.a` is the same across modules? 
+To enable VCD traces, add the `--trace` flag. To add C++ coroutine support for
+timing and such, add `--timing`.
 
 ## SBY
 
