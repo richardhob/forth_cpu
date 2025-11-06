@@ -17,7 +17,7 @@ all: build
 run: obj_dir/Vfifo
 	./obj_dir/Vfifo
 
-.PHONY: exe
+.PHONY: build
 build: obj_dir/Vfifo
 
 ../libunity.a:
