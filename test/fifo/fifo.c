@@ -15,7 +15,7 @@
 #define FIFO_WIDTH (8)
 
 Vfifo * tb;
-VerilatedVcdC * trace;
+extern VerilatedVcdC * trace;
 
 enum {
     CMD_NONE = 0,
@@ -23,9 +23,9 @@ enum {
     CMD_POP  = 2
 };
 
-uint32_t g_tick = 1;
 void tick()
 {
+    static uint32_t g_tick = 1;
     tb->eval();
 
     // 2ns Before the tick
@@ -52,12 +52,11 @@ void tick()
 
 TEST_GROUP(fifo);
 
+uint32_t added = 0;
+
 TEST_SETUP(fifo) 
 {
-    g_tick = 1;
-
     tb = new Vfifo;
-    trace = new VerilatedVcdC;
     tb->trace(trace, 99);
 
     tb->i_reset  = 1;
@@ -75,18 +74,18 @@ TEST_SETUP(fifo)
 
 TEST_TEAR_DOWN(fifo)
 {
-    trace->close();
     delete tb;
 }
 
 TEST_GROUP_RUNNER(fifo)
 {
     RUN_TEST_CASE(fifo, test_push_and_pop);
+    RUN_TEST_CASE(fifo, test_push_and_none);
 }
 
 TEST(fifo, test_push_and_pop)
 {
-    trace->open("test_fail.vcd");
+    // trace->open("test_push_and_pop.vcd");
 
     tb->i_cmd = CMD_PUSH;
     for (int i = 0; i < FIFO_DEPTH; i++)
@@ -102,6 +101,28 @@ TEST(fifo, test_push_and_pop)
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
         TEST_ASSERT_EQUAL(i, tb->o_data);
+        tick();
+    }
+}
+
+TEST(fifo, test_push_and_none)
+{
+    // trace->open("test_push_and_none.vcd");
+
+    tb->i_cmd = CMD_PUSH;
+    for (int i = 0; i < FIFO_DEPTH; i++)
+    {
+        tb->i_data = i;
+        tick();
+    }
+
+    tb->i_data = 0;
+    tb->i_cmd = CMD_NONE;
+    tick();
+
+    for (int i = 0; i < FIFO_DEPTH; i++)
+    {
+        TEST_ASSERT_EQUAL(0, tb->o_data);
         tick();
     }
 }
