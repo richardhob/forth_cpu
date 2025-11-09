@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal clock_divider.v
+prep -top clock_divider
+opt_merge -share_all
+
+[files]
+clock_divider.v
