@@ -57,7 +57,12 @@ uint32_t added = 0;
 TEST_SETUP(fifo) 
 {
     tb = new Vfifo;
-    tb->trace(trace, 99);
+
+    if (added == 0)
+    {
+        tb->trace(trace, 99);
+        added = 1;
+    }
 
     tb->i_reset  = 1;
     tb->i_enable = 1;
