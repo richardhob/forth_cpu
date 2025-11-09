@@ -73,14 +73,11 @@ TEST(clock_divider, test_hold_reset)
 {
     // trace->open("test_hold_reset.vcd");
     tb->i_rst = 1;
-    tb->i_clk = 0;
-
     uint32_t output_clocks[10] = {0};
 
     for(int i = 0; i < 10; i++)
     {
         tick();
-        tb->i_clk = !tb->i_clk;
         output_clocks[i] = tb->o_clk;
     }
 
@@ -94,13 +91,10 @@ TEST(clock_divider, test_divider)
 {
     // trace->open("test_divider.vcd");
     uint32_t output_state = 0;
+
     tb->i_rst = 1;
-    tb->i_clk = 0;
-
     tick();
-
     tb->i_rst = 0;
-    tb->i_clk = 0;
 
     TEST_ASSERT_EQUAL(output_state, tb->o_clk);
 
@@ -112,7 +106,6 @@ TEST(clock_divider, test_divider)
             TEST_ASSERT_EQUAL(!output_state, tb->o_clk);
             output_state = !output_state;
         }
-        tb->i_clk = !tb->i_clk;
     }
 }
 
