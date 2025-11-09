@@ -12,9 +12,9 @@ initial o_clk = 0;
 reg [NBITS-1:0] counter;
 initial counter = 0;
 
-always @(posedge i_clk or negedge i_rst)
+always @(posedge i_clk or posedge i_rst)
 begin
-    if (!i_rst) 
+    if (i_rst) 
     begin
         counter <= 0;
         o_clk <= 0;

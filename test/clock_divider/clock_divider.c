@@ -72,7 +72,7 @@ TEST_GROUP_RUNNER(clock_divider)
 TEST(clock_divider, test_hold_reset)
 {
     // trace->open("test_hold_reset.vcd");
-    tb->i_rst = 0;
+    tb->i_rst = 1;
     tb->i_clk = 0;
 
     uint32_t output_clocks[10] = {0};
@@ -94,12 +94,12 @@ TEST(clock_divider, test_divider)
 {
     // trace->open("test_divider.vcd");
     uint32_t output_state = 0;
-    tb->i_rst = 0;
+    tb->i_rst = 1;
     tb->i_clk = 0;
 
     tick();
 
-    tb->i_rst = 1;
+    tb->i_rst = 0;
     tb->i_clk = 0;
 
     TEST_ASSERT_EQUAL(output_state, tb->o_clk);
