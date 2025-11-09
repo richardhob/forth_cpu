@@ -1,0 +1,14 @@
+[options]
+mode bmc
+depth 20
+
+[engines]
+smtbmc
+
+[script]
+read -formal counter.v
+prep -top counter
+opt_merge -share_all
+
+[files]
+counter.v
