@@ -23,7 +23,11 @@ begin
     end
     else if (i_en)
     begin
-        if (_count < THRESHOLD) _count = _count + 1;
+        if (_count < THRESHOLD) 
+        begin
+            o_line <= 0;
+            _count = _count + 1;
+        end
         else
         begin
             o_line <= 1;
