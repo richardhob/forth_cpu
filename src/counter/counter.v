@@ -1,3 +1,4 @@
+// One shot counter / timer (depending on how you hook it up)
 
 module counter(i_clk, i_rst, i_en, o_line);
 
@@ -31,7 +32,6 @@ begin
         else
         begin
             o_line <= 1;
-            _count <= 0;
         end
     end
 end
@@ -49,13 +49,26 @@ begin
     f_past_valid <= 1'b1;
 end
 
-always @(posedge i_reset)
+always @(posedge i_rst)
 begin
     f_past_reset <= 1'b1;
 end
 
 always @(posedge i_clk)
-    if (f_past_valid && !i_rst && i_en && !f_past_reset) assert($changed(_count));
+    if (f_past_valid && !i_rst && i_en && $past(i_en) && (_count < THRESHOLD)) 
+        assert($changed(_count));
+
+always @(posedge i_clk)
+    if (f_past_valid && !i_rst && i_en && !f_past_reset && (_count >= THRESHOLD)) 
+        assert(o_line == 1);
+
+always @(posedge i_clk)
+    if (o_line == 1 && !f_past_reset && !i_rst)
+        assert(o_line == 1);
+
+always @(posedge i_clk)
+    if (_count < THRESHOLD)
+        assert(o_line == 0);
 
 `endif
 
