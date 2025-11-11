@@ -1,20 +1,107 @@
+// UART RX bits
+// 
+// Clocking bits:
+//
+// ```
+// i_clk-->[divider]-->divided_clk
+// ```
+//
+// First bit:
+//
+// ```
+//               counter0
+//               ===========
+//               | T=OSR/2 |
+//        i_rx-->| start   |
+//        i_rx-->| en     o|----+===>|c0.o -> start_bit_found
+//      reset1-->| rst     |    |    |!c0.o & c1.o -> no_s.b.rst
+// divided_clk-->|>clk     |    |
+//               -----------    |    |no_s.b.rst | sample_data_bit -> reset1
+//                              |
+//               counter1       |
+//               ===========    |
+//               | T=OSR   |    |
+//        i_rx-->| start   |    |
+//          HI-->| en     o|----+
+//      reset1-->| rst     |
+// divided_clk-->|>clk     |
+//               -----------
+// ```
+//
+// Data bits:
+//
+// ```
+//                   counter3
+//                   ===========
+//                   | T=OSR   |
+// start_bit_found-->| start   |
+// !end_of_data_bits>| en     o|---->sample_data_bit
+// sample_data_bit-->| rst     |
+//     divided_clk-->|>clk     |
+//                   -----------
+//
+//                   counter4
+//                   ===========
+//                   | T=8     |
+// start_bit_found-->| start   |
+//              HI-->| en     o|---->end_of_data_bits
+// end_of_data_bits->| rst     |
+// sample_data_bit-->|>clk     |
+//                   -----------
+//
+//                   counter5
+//                   ===========
+//                   | T=2     |
+// end_of_data_bits->| start   |
+//              HI-->| en     o|---->end_of_stop_bits
+// end_of_stop_bits->| rst     |
+//     divided_clk-->|>clk     |
+//                   -----------
+// ```
+//
+// Shift Register:
+//
+// ```
+//                   shift      
+//                   ===========
+// sample_data_bit-->| en      |
+//              ??-->| rst    o|---->[8:0] result
+//            i_rx-->| in      |
+//           i_clk-->|>clk     |
+//                   -----------
+// ```
+//
+// Fifo ...
+//
+//
 
-module uart_rx(i_rst, i_en, i_rx, i_clk, o_data, o_new_data);
+module uart_rx(i_clk, i_rst, i_en, i_rx, o_data, o_new_data);
 
-parameter WIDTH = 8;       // UART Data Bits
-parameter STOP_BITS = 2;   // UART Stop Bits
-parameter START_BITS = 1;  // UART Start Bits
+parameter START_BITS  = 1; // UART Start Bits
+parameter DATA_BITS   = 8; // UART Data Bits
+parameter STOP_BITS   = 2; // UART Stop Bits
 parameter PARITY_BITS = 0; // UART Parity Bits
 
 parameter CLOCK_RATE = 120000000; // Hz
-parameter BAUDRATE = 115200;      // bps
-parameter OSR = 16;               // Over Sample Ratio
+parameter BAUDRATE   = 115200;    // Baud rate (bits / second)
+parameter OSR        = 16;        // Over Sample Ratio
 
-localparam TOTAL_BITS = WIDTH + STOP_BITS + START_BITS + PARITY_BITS;
+localparam TOTAL_BITS = DATA_BITS + STOP_BITS + START_BITS + PARITY_BITS;
 localparam DIVIDER_RATIO = CLOCK_RATE / (BAUDRATE * TOTAL_BITS);
 
-input wire rx_i;
-input wire clk_i;
+input wire i_clk;
+input wire i_rst;
+input wire i_en;
+
+input wire i_rx;
+
+output reg [DATA_BITS-1:0] o_data;
+initial o_data = 0;
+
+output reg o_new_data;
+initial o_new_data = 0;
+
+// 
 
 wire divided_clk;
 
@@ -24,11 +111,6 @@ initial start_bit_found = 0;
 wire start_bit_valid;
 wire start_bit_timeout;
 
-output reg [WIDTH-1:0] o_data;
-initial o_data = 0;
-
-output reg o_new_data;
-initial o_new_data = 0;
 
 // UART Setup
 //
@@ -65,7 +147,7 @@ counter #(
 // When do we sample the waveforms?
 timer #(
     .THRESHOLD=OSR // A whole bit
-    .CYCLES=WIDTH // Sample 8 Bits
+    .CYCLES=DATA_BITS // Sample 8 Bits
 ) sample_timer (
     .i_clk(divided_clk),
     .i_rst(i_rst),
