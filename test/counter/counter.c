@@ -17,12 +17,6 @@
 Vcounter * tb;
 extern VerilatedVcdC * trace;
 
-enum {
-    CMD_NONE = 0,
-    CMD_PUSH = 1,
-    CMD_POP  = 2
-};
-
 void tick()
 {
     static uint32_t g_tick = 1;
@@ -93,9 +87,10 @@ TEST(counter, test_done)
         tick();
     }
 
-    TEST_ASSERT_EQUAL(1, results[256]);
-    TEST_ASSERT_EQUAL(1, results[512]);
-    TEST_ASSERT_EQUAL(1, results[768]);
+    for (int i = 256; i < 1024; i++)
+    {
+        TEST_ASSERT_EQUAL(1, results[i]);
+    }
 }
 
 // EOF
