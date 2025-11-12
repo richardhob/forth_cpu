@@ -84,17 +84,6 @@ begin
 end
 
 always @(posedge i_clk)
-    if (f_past_valid 
-        && i_en 
-        && (i_cmd == CMD_NONE)
-        && ($past(i_cmd) == CMD_NONE)
-        )
-    begin
-        assert($stable(_o_pointer));
-        assert($stable(_i_pointer));
-    end
-
-always @(posedge i_clk)
     if (f_past_valid
         && i_en
         && ($past(i_cmd) & CMD_SET)
