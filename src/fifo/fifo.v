@@ -83,23 +83,23 @@ begin
     f_past_reset <= 1'b1;
 end
 
-always @(posedge i_clk)
-    if (f_past_valid
-        && i_en
-        && $past(i_get)
-        && i_get)
+always @(*)
+    if (i_rst)
     begin
-        assert($stable(_o_pointer));
+        assert(o_set == 0);
+        assert(o_get == 0);
+        assert(_i_pointer == 0);
+        assert(_o_pointer == 0);
+        assert(o_data == 0);
     end
 
 always @(posedge i_clk)
-    if (f_past_valid
-        && i_en
-        && $past(i_set)
-        && i_set)
-    begin
+    if (f_past_valid && !f_past_reset && i_en && i_set && o_set)
         assert($stable(_i_pointer));
-    end
+
+always @(posedge i_clk)
+    if (f_past_valid && !f_past_reset && i_en && i_get && o_get)
+        assert($stable(_o_pointer));
 
 `endif
 
