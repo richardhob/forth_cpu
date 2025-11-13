@@ -71,9 +71,34 @@
 //                   -----------
 // ```
 //
-// Fifo ...
+// Fifo:
 //
+// ```
+//                   fifo
+//                   ===========
+//             HI--->| en      |
+//            ???--->| rst     |
+//   [...] result--->| i_data  |
+// end_of_data_bits->| i_set   |
+//          o_set--->| o_set   |
+//     divided_clk-->|>clk     |
+//                   |    i_get|--->|To other places...
+//                   |    o_get|--->|
+//                   -----------
+// ```
 //
+// Samples in Fifo:
+//
+// ```
+//                   counter5
+//                   ===========
+//                   | T=FIFO.D|
+// end_of_data_bits->| start   |
+//              HI-->| en     o|---->fifo_full
+//              ??-->| rst     |
+//     divided_clk-->|>clk     |
+//                   -----------
+// ```
 
 module uart_rx(i_clk, i_rst, i_en, i_rx, o_data, o_new_data);
 
