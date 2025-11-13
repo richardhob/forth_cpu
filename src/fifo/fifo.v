@@ -48,7 +48,7 @@ begin
     end
     else if (i_en)
     begin
-        if (i_cmd & CMD_SET)
+        if (i_set & ~o_set)
         begin
             _data[_i_pointer] <= i_data;
             _i_pointer <= _i_pointer + 1;
@@ -56,7 +56,7 @@ begin
         end
         else o_set <= 0;
 
-        if (i_cmd & CMD_GET)
+        if (i_get & ~o_get)
         begin
             o_data <= _data[_o_pointer];
             _o_pointer <= _o_pointer + 1;
@@ -86,8 +86,8 @@ end
 always @(posedge i_clk)
     if (f_past_valid
         && i_en
-        && ($past(i_cmd) & CMD_SET)
-        && (i_cmd & CMD_SET))
+        && $past(i_get)
+        && i_get)
     begin
         assert($stable(_o_pointer));
     end
@@ -95,8 +95,8 @@ always @(posedge i_clk)
 always @(posedge i_clk)
     if (f_past_valid
         && i_en
-        && ($past(i_cmd) & CMD_GET)
-        && (i_cmd & CMD_GET))
+        && $past(i_set)
+        && i_set)
     begin
         assert($stable(_i_pointer));
     end

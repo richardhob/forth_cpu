@@ -11,17 +11,11 @@
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-#define FIFO_DEPTH (256)
 #define FIFO_WIDTH (8)
+#define FIFO_DEPTH (256)
 
 Vfifo * tb;
 extern VerilatedVcdC * trace;
-
-enum {
-    CMD_NONE = 0,
-    CMD_PUSH = 1,
-    CMD_POP  = 2
-};
 
 void tick()
 {
@@ -64,16 +58,18 @@ TEST_SETUP(fifo)
         added = 1;
     }
 
-    tb->i_reset  = 1;
-    tb->i_enable = 1;
-    tb->i_cmd    = CMD_NONE;
+    tb->i_rst    = 1;
+    tb->i_en     = 1;
+    tb->i_set    = 0;
+    tb->i_get    = 0;
     tb->i_data   = 0x0;
 
     tick(); // 1 clock of Reset
 
-    tb->i_reset  = 0;
-    tb->i_enable = 1;
-    tb->i_cmd    = CMD_NONE;
+    tb->i_rst    = 0;
+    tb->i_en     = 1;
+    tb->i_set    = 0;
+    tb->i_get    = 0;
     tb->i_data   = 0x0;
 }
 
@@ -93,21 +89,37 @@ TEST(fifo, test_push_and_pop)
 {
     // trace->open("test_push_and_pop.vcd");
 
-    tb->i_cmd = CMD_PUSH;
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
         tb->i_data = i;
+        tb->i_set = 1;
+
         tick();
+
+        tb->i_set = 0;
+        TEST_ASSERT_EQUAL(1, tb->o_set);
+
+        tick();
+
+        TEST_ASSERT_EQUAL(0, tb->o_set);
     }
 
     tb->i_data = 0;
-    tb->i_cmd = CMD_POP;
-    tick();
+    tb->i_set = 0;
 
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
-        TEST_ASSERT_EQUAL(i, tb->o_data);
+        tb->i_get = 1;
+
         tick();
+
+        tb->i_get = 0;
+        TEST_ASSERT_EQUAL(i, tb->o_data);
+        TEST_ASSERT_EQUAL(1, tb->o_get);
+
+        tick();
+
+        TEST_ASSERT_EQUAL(0, tb->o_get);
     }
 }
 
@@ -115,20 +127,28 @@ TEST(fifo, test_push_and_none)
 {
     // trace->open("test_push_and_none.vcd");
 
-    tb->i_cmd = CMD_PUSH;
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
+        tb->i_set = 1;
         tb->i_data = i;
         tick();
+
+        tb->i_set = 0;
+        TEST_ASSERT_EQUAL(1, tb->o_set);
+
+        tick();
+
+        TEST_ASSERT_EQUAL(0, tb->o_set);
     }
 
     tb->i_data = 0;
-    tb->i_cmd = CMD_NONE;
-    tick();
+    tb->i_set = 0;
+    tb->i_get = 0;
 
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
         TEST_ASSERT_EQUAL(0, tb->o_data);
+        TEST_ASSERT_EQUAL(0, tb->o_get);
         tick();
     }
 }
@@ -137,7 +157,9 @@ TEST(fifo, test_none_and_pop)
 {
     // trace->open("test_none_and_pop");
 
-    tb->i_cmd = CMD_NONE;
+    tb->i_set = 0;
+    tb->i_get = 0;
+
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
         tb->i_data = i;
@@ -145,13 +167,19 @@ TEST(fifo, test_none_and_pop)
     }
 
     tb->i_data = 0;
-    tb->i_cmd = CMD_POP;
-    tick();
 
     for (int i = 0; i < FIFO_DEPTH; i++)
     {
-        TEST_ASSERT_EQUAL(0, tb->o_data);
+        tb->i_get = 1;
         tick();
+
+        tb->i_get = 0;
+        TEST_ASSERT_EQUAL(1, tb->o_get);
+        TEST_ASSERT_EQUAL(0, tb->o_data);
+
+        tick();
+
+        TEST_ASSERT_EQUAL(0, tb->o_get);
     }
 }
 

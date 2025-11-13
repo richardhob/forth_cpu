@@ -11,9 +11,6 @@
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-#define FIFO_DEPTH (256)
-#define FIFO_WIDTH (8)
-
 Vcounter * tb;
 extern VerilatedVcdC * trace;
 
@@ -58,11 +55,11 @@ TEST_SETUP(counter)
         added = 1;
     }
 
-    tb->i_rst  = 1;
+    tb->i_rst = 1;
 
     tick(); // 1 clock of Reset
 
-    tb->i_rst  = 0;
+    tb->i_rst = 0;
     tb->i_en = 1;
 }
 
@@ -73,18 +70,74 @@ TEST_TEAR_DOWN(counter)
 
 TEST_GROUP_RUNNER(counter)
 {
-    RUN_TEST_CASE(counter, test_done);
+    RUN_TEST_CASE(counter, test_start);
+    RUN_TEST_CASE(counter, test_no_start);
+    RUN_TEST_CASE(counter, test_start_one_clock);
 }
 
-TEST(counter, test_done)
+TEST(counter, test_start)
 {
-    uint32_t results[1024] = {0};
-    trace->open("test_done.vcd");
+    // trace->open("test_start.vcd");
 
+    uint32_t results[1024] = {0};
+
+    tb->i_start = 1;
     for (int i = 0; i < 1024; i++)
     {
         results[i] = tb->o_line;
         tick();
+    }
+
+    for (int i = 0; i < 256; i++)
+    {
+        TEST_ASSERT_EQUAL(0, results[i]);
+    }
+
+    for (int i = 256; i < 1024; i++)
+    {
+        TEST_ASSERT_EQUAL(1, results[i]);
+    }
+}
+
+TEST(counter, test_no_start)
+{
+    // trace->open("test_no_start.vcd");
+
+    uint32_t results[1024] = {0};
+
+    tb->i_start = 0;
+    for (int i = 0; i < 1024; i++)
+    {
+        results[i] = tb->o_line;
+        tick();
+    }
+
+    for (int i = 0; i < 1024; i++)
+    {
+        TEST_ASSERT_EQUAL(0, results[i]);
+    }
+}
+
+TEST(counter, test_start_one_clock)
+{
+    // trace->open("test_start_one_clock.vcd");
+
+    uint32_t results[1024] = {0};
+
+    tb->i_start = 1;
+    tick();
+    results[0] = tb->o_line;
+    tb->i_start = 0;
+
+    for (int i = 1; i < 1024; i++)
+    {
+        results[i] = tb->o_line;
+        tick();
+    }
+
+    for (int i = 0; i < 256; i++)
+    {
+        TEST_ASSERT_EQUAL(0, results[i]);
     }
 
     for (int i = 256; i < 1024; i++)
