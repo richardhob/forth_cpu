@@ -5,7 +5,7 @@
 # - Create test EXEs
 # - Run test EXEs
 
-PROJECTS:=fifo clock_divider counter
+PROJECTS:=fifo clock_divider counter shift
 
 .PHONY: all
 all: lib build run
