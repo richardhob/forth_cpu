@@ -77,7 +77,7 @@ TEST_GROUP_RUNNER(counter)
 
 TEST(counter, test_start)
 {
-    // trace->open("test_start.vcd");
+    trace->open("test_start.vcd");
 
     uint32_t results[1024] = {0};
 

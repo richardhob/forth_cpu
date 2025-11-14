@@ -18,6 +18,9 @@ initial o_line = 0;
 reg started;
 initial started = 0;
 
+reg done;
+initial done = 0;
+
 reg [NBITS-1:0] _count;
 initial _count = 0;
 
@@ -28,20 +31,28 @@ begin
         _count <= 0;
         o_line <= 0;
         started <= 0;
+        done <= 0;
     end
     else if (i_en)
     begin
-        if (i_start) started <= 1;
-        if (i_start || started) 
+        if (!done)
         begin
-            if (_count < THRESHOLD) 
+            if (i_start) started <= 1;
+            if (i_start || started)
             begin
-                o_line <= 0;
-                _count = _count + 1;
-            end
-            else
-            begin
-                o_line <= 1;
+/* verilator lint_off WIDTHEXPAND */
+                if (_count < THRESHOLD) 
+/* verilator lint_on  WIDTHEXPAND */
+                begin
+                    o_line <= 0;
+                    done <= 0;
+                    _count = _count + 1;
+                end
+                else
+                begin
+                    o_line <= 1;
+                    done <= 1;
+                end
             end
         end
     end
@@ -72,20 +83,30 @@ begin
         assert(_count == 0);
         assert(started == 0);
         assert(o_line == 0);
+        assert(done == 0);
     end
 end
 
 always @(posedge i_clk)
     if (_count >= THRESHOLD)
+    begin
         assert(o_line == 1);
+        assert(done == 1);
+    end
 
 always @(posedge i_clk)
     if (o_line == 1 && !f_past_reset)
+    begin
         assert(o_line == 1);
+        assert(done == 1);
+    end
 
 always @(posedge i_clk)
     if (_count < THRESHOLD)
+    begin
         assert(o_line == 0);
+        assert(done == 0);
+    end
 
 `endif
 
