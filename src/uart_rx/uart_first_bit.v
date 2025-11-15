@@ -23,10 +23,13 @@ assign actually_reset = i_rst | pulse_timer_expired;
 
 assign o_found = first_bit_found;
 
+wire first_bit_enable;
+assign first_bit_enable = i_rx & i_en;
+
 counter #(.THRESHOLD(HALF_OSR)) first_bit (
     .i_clk(i_clk),
     .i_rst(actually_reset),
-    .i_en(i_rx),
+    .i_en(first_bit_enable),
     .i_start(i_rx),
     .o_line(first_bit_found)
 );
@@ -34,7 +37,7 @@ counter #(.THRESHOLD(HALF_OSR)) first_bit (
 counter #(.THRESHOLD(TIMER)) pulse_timer (
     .i_clk(i_clk),
     .i_rst(actually_reset),
-    .i_en(1'b1),
+    .i_en(i_en),
     .i_start(i_rx),
     .o_line(pulse_timer_expired)
 );

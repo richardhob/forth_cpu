@@ -71,13 +71,14 @@ TEST_TEAR_DOWN(uart_first_bit)
 
 TEST_GROUP_RUNNER(uart_first_bit)
 {
-    RUN_TEST_CASE(uart_first_bit, test_valid);
-    RUN_TEST_CASE(uart_first_bit, test_pulse_1);
+    RUN_TEST_CASE(uart_first_bit, test_constant_hi);
+    RUN_TEST_CASE(uart_first_bit, test_pulse_below_osr_div_2)
+    RUN_TEST_CASE(uart_first_bit, test_constant_hi_disable)
 }
 
-TEST(uart_first_bit, test_valid)
+TEST(uart_first_bit, test_constant_hi)
 {
-    // trace->open("test_valid.vcd");
+    // trace->open("test_constant_hi.vcd");
 
     uint8_t output[OSR + 2] = {0};
 
@@ -106,28 +107,75 @@ TEST(uart_first_bit, test_valid)
 
 }
 
-TEST(uart_first_bit, test_pulse_1)
+TEST(uart_first_bit, test_constant_hi_disable)
 {
-    // trace->open("test_pulse_1.vcd");
+    // trace->open("test_constant_hi_disable.vcd");
 
-    uint8_t output[OSR+2] = {0};
+    uint8_t output[2*OSR] = {0};
 
     tb->i_rx = 1;
-    output[0] = tb->o_found;
-    tick();
-    tb->i_rx = 0;
-    output[1] = tb->o_found;
-    tick();
 
-    for (int i = 2; i < OSR+2; i++)
+    for (int i = 0; i < OSR; i++)
     {
         output[i] = tb->o_found;
         tick();
     }
 
-    for (int i = 0; i < OSR+2; i++)
+    tb->i_en = 0;
+
+    for (int i = OSR; i < 2*OSR; i++)
     {
-        TEST_ASSERT_EQUAL(0, output[i]);
+        output[i] = tb->o_found;
+        tick();
+    }
+
+    for (int i = 0; i <= (OSR/2); i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(0, output[i], "Debounce");
+    }
+
+    for (int i = (OSR/2) + 1; i < (OSR/2) + 1 + PULSE_WIDTH; i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(1, output[i], "Bit HI");
+    }
+
+    for (int i = (OSR/2) + 1 + PULSE_WIDTH; i < 2*OSR; i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(0, output[i], "Bit Low");
+    }
+
+}
+
+void rx_hi_and_run(uint8_t count, uint8_t * output, uint8_t length)
+{
+    for (int i = 0; i < count; i ++)
+    {
+        tb->i_rx = 1;
+        output[i] = tb->o_found;
+        tick();
+    }
+
+    for (int i = count; i < length; i++)
+    {
+        tb->i_rx = 0;
+        output[i] = tb->o_found;
+        tick();
+    }
+}
+
+TEST(uart_first_bit, test_pulse_below_osr_div_2)
+{
+    // trace->open("test_pulse_below_osr_div_2.vcd");
+
+    uint8_t output[OSR+2] = {0};
+
+    for (int i = 0; i < OSR/2; i++)
+    {
+        rx_hi_and_run(i, output, OSR+2);
+        for (int j = 0; j < OSR+2; j++)
+        {
+            TEST_ASSERT_EQUAL(0, output[j]);
+        }
     }
 }
 
