@@ -1,3 +1,47 @@
+// First UART Bit
+//
+// Find the first UART bit on the RX line. To make sure this isn't a 'pulse' and
+// is in fact a real bit, I included a 'pulse_timer' which will reset the block
+// if the pulse is not long enough. 
+//
+// Parameters:
+// -OSR = Over Sample Ratio - how many "i_clk" pulses we get for each bit 
+//
+// Inputs:
+// -i_en = Enable the block
+// -i_rst = Reset the block
+// -i_clk = UART Clock (OSR * BaudRate)
+// -i_rx = UART RX Line
+//
+// Output:
+// -o_found = Start bit found
+//
+// ```
+//               first_bit
+//               ===========
+//               |<counter>|
+//               |<T=OSR/2>|
+//        i_rx-->|start    |
+// i_en & i_rx-->|en      o|---->o_found
+// actually_reset|rst      | 
+//        i_clk->|>clk     |
+//               -----------
+//
+//               pulse_timer     
+//               ===========     
+//               |<counter>|     
+//              |<T=OSR/2+2>|  
+//        i_rx-->|start    |     
+//        i_en-->|en      o|---->pulse_timer_expired
+// actually_reset|rst      |
+//        i_clk->|>clk     |
+//               -----------
+// ```
+//
+// where:
+// - actually_reset = i_rst | pulse_timer_expired | !i_rx
+//
+// Simple!
 
 module uart_first_bit(i_rst, i_clk, i_en, i_rx, o_found);
 
@@ -18,8 +62,9 @@ initial o_found = 0;
 wire first_bit_found;
 wire pulse_timer_expired;
 
+// Reset if i_rx is low
 wire actually_reset;
-assign actually_reset = i_rst | pulse_timer_expired;
+assign actually_reset = i_rst | pulse_timer_expired | !i_rx;
 
 assign o_found = first_bit_found;
 

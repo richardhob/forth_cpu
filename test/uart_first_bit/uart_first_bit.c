@@ -71,6 +71,7 @@ TEST_TEAR_DOWN(uart_first_bit)
 
 TEST_GROUP_RUNNER(uart_first_bit)
 {
+    RUN_TEST_CASE(uart_first_bit, test_glitch_then_high)
     RUN_TEST_CASE(uart_first_bit, test_constant_hi);
     RUN_TEST_CASE(uart_first_bit, test_pulse_below_osr_div_2)
     RUN_TEST_CASE(uart_first_bit, test_constant_hi_disable)
@@ -176,6 +177,43 @@ TEST(uart_first_bit, test_pulse_below_osr_div_2)
         {
             TEST_ASSERT_EQUAL(0, output[j]);
         }
+    }
+}
+
+TEST(uart_first_bit, test_glitch_then_high)
+{
+    trace->open("test_glitch_then_high.vcd");
+    uint8_t output[2*OSR] = {0};
+
+    tb->i_rx = 1;
+    output[0] = tb->o_found;
+    tick();
+
+    tb->i_rx = 0;
+    output[1] = tb->o_found;
+    tick();
+
+    tb->i_rx = 1;
+    for (int i = 2; i < 2*OSR; i++)
+    {
+        output[i] = tb->o_found;
+        tick();
+    }
+
+    for (int i = 0; i <= (OSR/2)+2; i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(0, output[i], "Debounce");
+    }
+
+    for (int i = (OSR/2) + 3; i < (OSR/2) + 3 + PULSE_WIDTH; i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(1, output[i], "Bit HI");
+    }
+
+    // Back to low (will go high again in a few clocks, so we won't check that)
+    for (int i = (OSR/2) + 3 + PULSE_WIDTH; i < (OSR/2) + 3 + PULSE_WIDTH + 3; i++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(0, output[i], "Bit Low");
     }
 }
 

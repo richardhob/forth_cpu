@@ -1,31 +1,22 @@
 // UART RX bits
 // 
-// Clocking bits:
+// Clock divider -> clock_divider.v
 //
 // ```
 // i_clk-->[divider]-->divided_clk
 // ```
 //
-// First bit:
+// First bit -> uart_first_bit.v:
 //
 // ```
-//               counter0
-//               ===========
-//               | T=OSR/2 |
-//        i_rx-->| start   |
-//        i_rx-->| en     o|----+===>|c0.o -> start_bit_found
-//      reset1-->| rst     |    |    |!c0.o & c1.o -> no_s.b.rst
-// divided_clk-->|>clk     |    |
-//               -----------    |    |no_s.b.rst | sample_data_bit -> reset1
-//                              |
-//               counter1       |
-//               ===========    |
-//               | T=OSR   |    |
-//        i_rx-->| start   |    |
-//          HI-->| en     o|----+
-//      reset1-->| rst     |
-// divided_clk-->|>clk     |
-//               -----------
+//           uart_first_bit
+//           ================
+//    i_en-->|en            |
+//    i_rst->|rst           |
+//    i_rx-->|rx            |
+//           |         found|---->start_bit_found
+//    d_clk->|>clk          |
+//           ----------------
 // ```
 //
 // Data bits:
