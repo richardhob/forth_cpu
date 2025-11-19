@@ -13,6 +13,19 @@ There are a few parts of the hardware design we need to figure out:
 I think we'll try to use UART for input / output. The Zynq has access to a UART
 to USB dude, so we can use that (potentially).
 
+------
+
+**__NOTE__**
+
+Is it worth putting the peripherals on a Wishbone bus? And connecting them to
+the CPU using that? Maybe learn all about memory mapper peripherals and such?
+
+Maybe I'll look through the ZipCPU Wishbone bits and determine if I wanna do
+that. The big advantage to using Wishbone is that I can (potentially) steal
+other peoples peripherals maybe?
+
+------
+
 ### UART 
 
 Infomation about UART can be found on Wikipedia:

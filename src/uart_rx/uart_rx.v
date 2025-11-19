@@ -91,7 +91,7 @@
 //                   -----------
 // ```
 
-module uart_rx(i_clk, i_rst, i_en, i_rx, o_data, o_new_data);
+module uart_rx(i_clk, i_rst, i_en, i_rx, o_data, o_ready);
 
 parameter START_BITS  = 1; // UART Start Bits
 parameter DATA_BITS   = 8; // UART Data Bits
@@ -114,29 +114,10 @@ input wire i_rx;
 output reg [DATA_BITS-1:0] o_data;
 initial o_data = 0;
 
-output reg o_new_data;
-initial o_new_data = 0;
-
-// 
+output reg o_ready;
+initial o_ready = 0;
 
 wire divided_clk;
-
-reg start_bit_found;
-initial start_bit_found = 0;
-
-wire start_bit_valid;
-wire start_bit_timeout;
-
-
-// UART Setup
-//
-// 1. Clock Divider [X]
-// 2. First Bit Counter [X]
-// 3. First Bit Timer [ ]
-// 4. Package Timer [ ]
-// ?. If First Bit is long enough:
-//    a. Save N bit packet (o_data)
-//    b. set o_new_data
 
 // Divide the clock down to a multiple (ish) of the desired baud rate
 clock_divider #(
@@ -147,51 +128,50 @@ clock_divider #(
     .o_clk(divided_clk)
 );
 
-// Is the first bit wider than half a bit (AKA OSR / 2)?
-//
-// TODO: Add "one shot" feature to counter
-counter #(
-    .THRESHOLD=(OSR/2), // More than half a bit
-    .CYCLES=1
-) start_bit_counter (
-    .i_clk(divided_clk),
+reg running;
+initial running = 0;
+
+always @(posedge i_rst or posedge i_clk)
+begin
+    if (i_rst) running <= 0;
+    else if (!running && start_bit_found) running <= 1;
+    else if ( running && stop_bits_found) running <= 0;
+
+wire start_bit_found;
+
+uart_first_bit #(
+    .OSR=OSR
+) first_bit (
     .i_rst(i_rst),
-    .i_en(start_bit_found),
-    .o_line(start_bit_valid)
+    .i_clk(divided_clk),
+    .i_en(!running),
+    .i_rx(i_rx),
+    .o_found(start_bit_found)
 );
 
-// When do we sample the waveforms?
-timer #(
-    .THRESHOLD=OSR // A whole bit
-    .CYCLES=DATA_BITS // Sample 8 Bits
-) sample_timer (
-    .i_clk(divided_clk),
+uart_data_bits #(
+    .OSR=OSR,
+    .DATA_BITS=DATA_BITS
+) data_bits (
     .i_rst(i_rst),
-    .i_en(start_bit_valid),
-    .o_line(start_bit_timeout)
+    .i_clk(divided_clk),
+    .i_en(running),
+    .i_rx(i_rx),
+    .i_start(start_bit_found),
+    .o_data(o_data),
+    .o_done(o_ready)
 );
 
-// If the first bit is NOT wider than half a bit, reset it.
-timer #(
-    .THRESHOLD=OSR // A whole bit
-) start_bit_timer (
-    .i_clk(divided_clk),
+uart_stop_bits #(
+    .OSR=OSR,
+    .STOP_BITS=STOP_BITS
+) stop_bits (
     .i_rst(i_rst),
-    .i_en(start_bit_found),
-    .o_line(start_bit_timeout)
-);
-
-// Packet timer
-timer #(
-    .THRESHOLD=OSR * TOTAL_BITS // A whole packet
-) start_bit_timer (
     .i_clk(divided_clk),
-    .i_rst(i_rst | start_bit_timeout),
-    .i_en(start_bit_found),
-    .o_line(packet_timer)
-):
-
-always @(negedge i_rx)
-    if (i_en) start_bit_found <= 1;
+    .i_en(running),
+    .i_rx(i_rx),
+    .i_start(o_ready),
+    .o_done(stop_bits_found)
+);
 
 endmodule

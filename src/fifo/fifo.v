@@ -32,10 +32,6 @@ initial _i_pointer = 0;
 reg [$clog2(DEPTH)-1:0] _o_pointer;
 initial _o_pointer = 0;
 
-localparam CMD_NONE = 0;
-localparam CMD_SET  = 1;
-localparam CMD_GET  = 2;
-
 always @(posedge i_clk or posedge i_rst)
 begin
     if (i_rst)
