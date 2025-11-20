@@ -9,6 +9,7 @@ For this project, we'll need to create:
 2. Clock divider
 3. Shift Register
 4. FIFO Stack
+5. Diff
 
 We'll write this in Verilog for now, and test it with Verilator and Yosys (sby?)
 hopefully.
@@ -24,6 +25,9 @@ and enable / start the block (MUST be posedge signal).
 To use as a timer, route the signal to start and enable the block (use a clock
 that is convenient too).
 
+The provided `THRESHOLD` to this block is actually "+1" in practice? so
+definitely keep this in mind.
+
 ## Clock Divider
 
 Divide the provided `i_clk` into an `o_clk` using a simple parameter
@@ -35,6 +39,13 @@ and the `o_clk` should be the value. The specified divider should be over 0 -
 passing through a clock is not really supported.
 
 ## Shift Register
+
+On every clock, sample the input wire and shift it into the output data.
+
+## Diff
+
+Determine if the input value has changed from the last clock. If it has changed,
+output a pulse.
 
 ## FIFO Stack
 

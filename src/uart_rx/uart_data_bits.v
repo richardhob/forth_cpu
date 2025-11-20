@@ -1,3 +1,6 @@
+// Capture and save the UART Data bits 
+//
+//
 
 module uart_data_bits(i_clk, i_rst, i_en, i_rx, i_start, o_data, o_ready);
 
@@ -17,47 +20,103 @@ initial o_data = 0;
 output reg o_ready;
 initial o_ready = 0;
 
+wire counter_done;
+wire timer_done;
+
+reg running;
+initial running = 0;
+
+always @(posedge i_clk or posedge i_rst)
+begin
+    if (i_rst) running <= 0;
+    else if (i_en)
+    begin
+        if (counter_done || timer_done) running <= 0;
+        else if (i_start) running <= 1;
+    end
+end
+
+always @(posedge i_clk or posedge i_rst)
+begin
+    if (i_rst) o_ready <= 0;
+    else if (i_en)
+    begin
+        if (counter_done || timer_done) o_ready <= 1;
+    end
+end
+
+wire [DATA_BITS-1:0] sample_done;
+
+genvar i;
+
+generate 
+    for (i = 0; i < DATA_BITS; i = i + 1) 
+    begin
+        if (i == 0)
+        begin
+            counter #(
+                .THRESHOLD(OSR-1)
+            ) sample_timer (
+                .i_clk(i_clk),
+                .i_rst(!running),
+                .i_en(running),
+                .i_start(running),
+                .o_line(sample_done[i])
+            );
+        end
+        else
+        begin
+            counter #(
+                .THRESHOLD(OSR-1)
+            ) sample_timer (
+                .i_clk(i_clk),
+                .i_rst(!running),
+                .i_en(running),
+                .i_start(sample_done[i-1]),
+                .o_line(sample_done[i])
+            );
+        end
+    end
+endgenerate
+
 wire sample_ready;
 
-reg sample_timer_reset;
-assign sample_timer_reset = i_rst | sample_ready;
-
-counter #(
-    .THRESHOLD(OSR)
-) sample_timer (
+diff #(
+    .DATA_WIDTH(DATA_BITS)
+) ready (
     .i_clk(i_clk),
-    .i_rst(sample_timer_reset),
-    .i_en(i_en),
-    .i_start(i_start),
-    .o_line(sample_ready)
+    .i_rst(!running),
+    .i_en(running),
+    .i_data(sample_done),
+    .o_changed(sample_ready)
 );
 
 counter #(
     .THRESHOLD(DATA_BITS)
 ) sample_counter (
     .i_clk(sample_ready),
-    .i_rst(i_rst),
-    .i_en(i_en),
-    .i_start(i_start),
-    .o_line(o_ready)
+    .i_rst(!running),
+    .i_en(running),
+    .i_start(running),
+    .o_line(counter_done)
 );
 
 counter #(
     .THRESHOLD(MSG_TIMER)
 ) message_timer (
     .i_clk(i_clk),
-    .i_rst(i_rst),
-    .i_en(i_en),
-    .i_start(i_start),
-    .o_line(message_done)
+    .i_rst(!running),
+    .i_en(running),
+    .i_start(running),
+    .o_line(timer_done)
 );
 
 shift #(
     .WIDTH(DATA_BITS)
 ) data (
-    .i_clk(i_clk),
+    .i_clk(sample_ready),
     .i_rst(i_rst),
-    .i_en(i_en),
+    .i_en(running),
     .i_data(i_rx),
     .o_data(o_data)
 );
