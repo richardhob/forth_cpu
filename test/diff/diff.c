@@ -11,9 +11,6 @@
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-#define FIFO_WIDTH (8)
-#define FIFO_DEPTH (256)
-
 Vdiff * tb;
 extern VerilatedVcdC * trace;
 
@@ -57,6 +54,11 @@ TEST_SETUP(diff)
         tb->trace(trace, 99);
         added = 1;
     }
+
+    tb->i_en = 0;
+    tb->i_rst = 1;
+    tick();
+    tb->i_rst = 0;
 }
 
 TEST_TEAR_DOWN(diff)
@@ -66,12 +68,94 @@ TEST_TEAR_DOWN(diff)
 
 TEST_GROUP_RUNNER(diff)
 {
-    RUN_TEST_CASE(diff, test_fail);
+    RUN_TEST_CASE(diff, test_no_change);
+    RUN_TEST_CASE(diff, test_change);
+    RUN_TEST_CASE(diff, test_disable_change);
 }
 
-TEST(diff, test_fail)
+TEST(diff, test_no_change)
 {
-    TEST_FAIL();
+    for (uint32_t i = 0; i <= 0xFF; i++)
+    {
+        tb->i_en = 0;
+        tb->i_data = i;
+        tb->i_rst = 1;
+        tick();
+
+        tb->i_en = 1;
+        tb->i_rst = 0;
+
+        tick();
+        tick();
+
+        TEST_ASSERT_EQUAL(0, tb->o_changed);
+    }
+}
+
+TEST(diff, test_change)
+{
+    // trace->open("test_change.vcd");
+    for (uint32_t i = 0; i <= 0xFF; i++)
+    {
+        tb->i_en = 0;
+        tb->i_data = 0;
+
+        tick();
+        tb->i_en = 1;
+        if (i == 0) 
+        {
+            tb->i_data = 1;
+        }
+        else 
+        {
+            tb->i_data = 0;
+        }
+
+        tick();
+        tick();
+
+        tb->i_data = i;
+        tick();
+
+        TEST_ASSERT_EQUAL(1, tb->o_changed);
+    }
+}
+
+TEST(diff, test_disable_change)
+{
+    // trace->open("test_disable_change.vcd");
+    for (uint32_t i = 0; i <= 0xFF; i++)
+    {
+        tb->i_en = 0;
+        tb->i_data = 0;
+        tb->i_rst = 1;
+
+        tick();
+
+        tb->i_en = 1;
+        tb->i_rst = 0;
+
+        if (i == 0) 
+        {
+            tb->i_data = 1;
+        }
+        else 
+        {
+            tb->i_data = 0;
+        }
+
+        tick();
+
+        // Disable the block
+        tb->i_en = 0;
+        tick();
+
+        tb->i_data = i;
+        tick();
+
+        // No changes should be reported when the block is disabled
+        TEST_ASSERT_EQUAL(0, tb->o_changed);
+    }
 }
 
 // EOF

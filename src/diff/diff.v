@@ -15,16 +15,25 @@ initial o_changed = 0;
 reg [DATA_WIDTH-1:0] temp;
 initial temp = 0;
 
+reg enabled;
+initial enabled = 0;
+
 always @(posedge i_clk or posedge i_rst)
 begin
     if (i_rst) 
     begin
         temp <= 0;
         o_changed <= 0;
+        enabled  <= 0;
     end
     else if (i_en)
     begin
-        if (temp != i_data)
+        if (0 == enabled)
+        begin
+            enabled <= 1;
+            temp <= i_data;
+        end
+        else if ((1 == enabled) && (temp != i_data))
         begin
             o_changed <= 1;
             temp <= i_data;
