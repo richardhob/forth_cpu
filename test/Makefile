@@ -5,7 +5,14 @@
 # - Create test EXEs
 # - Run test EXEs
 
-PROJECTS:=fifo clock_divider counter shift
+_PROJECTS:=clock_divider\
+          counter\
+          fifo\
+          shift\
+          uart_data_bits\
+          uart_first_bit\
+          uart_stop_bits
+PROJECTS=$(abspath $(_PROJECTS))
 
 .PHONY: all
 all: lib build run
