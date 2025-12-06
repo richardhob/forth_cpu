@@ -21,14 +21,14 @@ initial started = 0;
 reg done;
 initial done = 0;
 
-reg [NBITS-1:0] _count;
-initial _count = 0;
+reg [NBITS-1:0] count;
+initial count = 0;
 
 always @(posedge i_clk or posedge i_rst)
 begin
     if (i_rst)
     begin
-        _count <= 0;
+        count <= 0;
         o_line <= 0;
         started <= 0;
         done <= 0;
@@ -41,12 +41,12 @@ begin
             if (i_start || started)
             begin
 /* verilator lint_off WIDTHEXPAND */
-                if (_count < THRESHOLD) 
+                if (count < THRESHOLD) 
 /* verilator lint_on  WIDTHEXPAND */
                 begin
                     o_line <= 0;
                     done <= 0;
-                    _count = _count + 1;
+                    count = count + 1;
                 end
                 else
                 begin
@@ -80,7 +80,7 @@ always @(*)
 begin
     if (i_rst == 1)
     begin
-        assert(_count == 0);
+        assert(count == 0);
         assert(started == 0);
         assert(o_line == 0);
         assert(done == 0);
@@ -88,7 +88,7 @@ begin
 end
 
 always @(posedge i_clk)
-    if (_count >= THRESHOLD)
+    if (count >= THRESHOLD)
     begin
         assert(o_line == 1);
         assert(done == 1);
@@ -102,7 +102,7 @@ always @(posedge i_clk)
     end
 
 always @(posedge i_clk)
-    if (_count < THRESHOLD)
+    if (count < THRESHOLD)
     begin
         assert(o_line == 0);
         assert(done == 0);

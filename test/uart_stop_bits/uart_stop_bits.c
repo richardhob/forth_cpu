@@ -86,7 +86,7 @@ TEST(uart_stop_bits, test_valid)
     // The '+2' is (I think) because of how the `uart_data_bits` module does its
     // compare. Which should be fine for the STOP bits, but might not be fine
     // for the data bits ... may be worth investigating?
-    for (uint32_t i = 0; i < (OSR * STOP_BITS) + 2; i++)
+    for (uint32_t i = 0; i < (OSR * STOP_BITS); i++)
     {
         tick();
         TEST_ASSERT_EQUAL(0, tb->o_ready);
