@@ -8,7 +8,7 @@ LDFLAGS = -L$(abspath ..) -lunity
 SRC  := counter.c main.c
 VSRC := counter.v
 
-vpath %.v ../../src/counter
+vpath %.v ../../src
 
 .PHONY: all
 all: build

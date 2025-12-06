@@ -8,7 +8,7 @@ LDFLAGS = -L$(abspath ..) -lunity
 SRC  := clock_divider.c main.c
 VSRC := clock_divider.v
 
-vpath %.v ../../src/clock_divider
+vpath %.v ../../src
 
 .PHONY: all
 all: build

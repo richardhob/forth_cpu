@@ -8,7 +8,7 @@ LDFLAGS = -L$(abspath ..) -lunity
 SRC  := shift.c main.c
 VSRC := shift.v
 
-vpath %.v ../../src/shift
+vpath %.v ../../src
 
 .PHONY: all
 all: build

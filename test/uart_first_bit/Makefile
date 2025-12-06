@@ -9,10 +9,10 @@ SRC  := uart_first_bit.c main.c
 VSRC := uart_first_bit.v
 
 ROOT := ../../src
-VPATH := $(ROOT)/uart_rx $(ROOT)/counter $(ROOT)/shift $(ROOT)/clock_divider $(ROOT)/fifo $(ROOT)/diff
+VPATH := $(ROOT)/uart_rx $(ROOT)
 VFLAGS := $(addprefix -I,$(VPATH))
 
-vpath %.v ../../src/uart_rx
+vpath %.v $(VPATH)
 
 .PHONY: all
 all: build
