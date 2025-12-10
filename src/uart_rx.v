@@ -3,7 +3,7 @@
 //
 // Might (should) be a bit easier to understand / develop
 //
-module uart_rx_sm(i_divided_clk, i_rst, i_en, i_rx, o_data, o_ready, d_state, d_data);
+module uart_rx(i_divided_clk, i_rst, i_en, i_rx, o_data, o_ready, d_state, d_data);
 
 parameter START  =  1; // UART Start Bits
 parameter DATA   =  8; // UART Data Bits
