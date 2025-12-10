@@ -121,7 +121,7 @@ wire divided_clk;
 
 // Divide the clock down to a multiple (ish) of the desired baud rate
 clock_divider #(
-    .DIVIDER=DIVIDER_RATIO
+    .DIVIDER(DIVIDER_RATIO)
 ) uart_clk (
     .i_rst(i_rst),
     .i_clk(i_clk),

@@ -2,14 +2,13 @@
 module clock_divider(i_rst, i_clk, o_clk);
 
 parameter DIVIDER = 2; // Divider amount
-localparam NBITS = DIVIDER > 0 ? $clog2(DIVIDER) + 1 : 1; // counter bits
 
 input wire i_rst;
 input wire i_clk;
 output reg o_clk;
 initial o_clk = 0;
 
-reg [NBITS-1:0] counter;
+reg [31:0] counter;
 initial counter = 0;
 
 always @(posedge i_clk or posedge i_rst)
