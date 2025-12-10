@@ -11,7 +11,8 @@ _PROJECTS:=clock_divider\
           shift\
           uart_data_bits\
           uart_first_bit\
-          uart_stop_bits
+          uart_stop_bits\
+          uart_tx
 PROJECTS=$(abspath $(_PROJECTS))
 
 .PHONY: all

@@ -9,7 +9,7 @@ SRC  := uart_tx.c main.c
 VSRC := uart_tx.v
 
 ROOT := ../../src
-VPATH := $(ROOT) $(ROOT)/uart_tx
+VPATH := $(ROOT)
 VFLAGS := $(addprefix -I,$(VPATH))
 
 vpath %.v $(VPATH)
