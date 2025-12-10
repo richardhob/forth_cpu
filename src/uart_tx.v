@@ -185,6 +185,18 @@ begin
                 end
             end
 
+            default:
+            begin
+                d_data <= 0;
+                d_state <= STATE_IDLE;
+
+                stop_bits <= 0;
+                cooldown_bits <= 0;
+
+                o_tx <= 0;
+                o_next <= 0;
+            end
+
         endcase
     end
 end
