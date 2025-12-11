@@ -22,20 +22,20 @@ output reg o_ready;
 initial o_ready = 0;
 
 localparam START_THRESHOLD          = START * OSR;
-localparam START_THRESHOLD_DEBOUNCE = START_THRESHOLD * 0.25;
-localparam START_THRESHOLD_OK       = START_THRESHOLD * 0.5;
+localparam START_THRESHOLD_DEBOUNCE = START_THRESHOLD / 4;
+localparam START_THRESHOLD_OK       = START_THRESHOLD / 2;
 localparam START_BITS               = $clog2(START_THRESHOLD) + 1;
 
 localparam DATA_THRESHOLD           = DATA * OSR;
 localparam DATA_BITS                = $clog2(DATA_THRESHOLD) + 1;
-localparam D0_THRESHOLD             = (OSR / 2);
-localparam D1_THRESHOLD             = 1*OSR + (OSR / 2);
-localparam D2_THRESHOLD             = 2*OSR + (OSR / 2);
-localparam D3_THRESHOLD             = 3*OSR + (OSR / 2);
-localparam D4_THRESHOLD             = 4*OSR + (OSR / 2);
-localparam D5_THRESHOLD             = 5*OSR + (OSR / 2);
-localparam D6_THRESHOLD             = 6*OSR + (OSR / 2);
-localparam D7_THRESHOLD             = 7*OSR + (OSR / 2);
+localparam D0_THRESHOLD             = (OSR / 2) - 1;
+localparam D1_THRESHOLD             = 1*OSR + (OSR / 2) - 1;
+localparam D2_THRESHOLD             = 2*OSR + (OSR / 2) - 1;
+localparam D3_THRESHOLD             = 3*OSR + (OSR / 2) - 1;
+localparam D4_THRESHOLD             = 4*OSR + (OSR / 2) - 1;
+localparam D5_THRESHOLD             = 5*OSR + (OSR / 2) - 1;
+localparam D6_THRESHOLD             = 6*OSR + (OSR / 2) - 1;
+localparam D7_THRESHOLD             = 7*OSR + (OSR / 2) - 1;
 
 localparam STOP_THRESHOLD           = STOP * OSR;
 localparam STOP_BITS                = $clog2(STOP_THRESHOLD) + 1;
@@ -89,24 +89,34 @@ begin
                 if (1 == i_rx)
                 begin
                     d_state <= STATE_START_DEBOUNCE;
-                    start_counter <= 1;
+                    start_counter <= 0;
                 end
             end
 
             STATE_START_DEBOUNCE:
             begin
-                if (start_counter > START_THRESHOLD_DEBOUNCE) d_state <= STATE_START_VALID;
                 start_counter <= start_counter + 1;
+                if (start_counter >= (START_THRESHOLD_DEBOUNCE - 1)) d_state <= STATE_START_VALID;
             end
 
             STATE_START_VALID:
             begin
+                start_counter <= start_counter + 1;
+                if (start_counter < START_THRESHOLD_OK)
+                begin
+                    if (i_rx == 0) d_state <= STATE_IDLE;
+                end
+                else d_state <= STATE_START;
+            end
+
+            STATE_START:
+            begin
                 start_counter += 1;
-                if ((start_counter < START_THRESHOLD_OK) && (i_rx == 0)) d_state <= STATE_IDLE;
-                else if (start_counter >= START_THRESHOLD)
+                if (start_counter >= (START_THRESHOLD - 1))
                 begin
                     d_state <= STATE_DATA_D0;
                     data_counter <= 0;
+
                     o_ready <= 0;
                     d_data <= 0;
                 end
@@ -194,7 +204,7 @@ begin
 
             STATE_DATA_END:
             begin
-                if (data_counter < DATA_THRESHOLD) data_counter <= data_counter + 1;
+                if (data_counter < (DATA_THRESHOLD - 1)) data_counter <= data_counter + 1;
                 else
                 begin
                     stop_counter <= 0;
@@ -207,7 +217,7 @@ begin
 
             STATE_STOP:
             begin
-                if (stop_counter < STOP_THRESHOLD) stop_counter <= stop_counter + 1;
+                if (stop_counter < (STOP_THRESHOLD - 1)) stop_counter <= stop_counter + 1;
                 else d_state <= STATE_IDLE;
             end
 

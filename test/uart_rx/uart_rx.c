@@ -94,8 +94,9 @@ TEST_TEAR_DOWN(uart_rx)
 
 TEST_GROUP_RUNNER(uart_rx)
 {
+    RUN_TEST_CASE(uart_rx, test_ignore_pulse);
     RUN_TEST_CASE(uart_rx, test_receive_single);
-    // RUN_TEST_CASE(uart_rx, test_receive_pulse);
+    RUN_TEST_CASE(uart_rx, test_receive_all);
 }
 
 void receive(uint8_t data_in)
@@ -108,10 +109,26 @@ void receive(uint8_t data_in)
 
     // Start Bit
     tb->i_rx = 1;
-    for (uint32_t i = 0; i < START * OSR; i++)
+    for (uint32_t i = 0; i < (START * OSR - 1); i++)
     {
         tick();
+
+        if (i < ((START * OSR) / 4))
+        {
+            TEST_ASSERT_EQUAL_MESSAGE(STATE_START_DEBOUNCE, tb->d_state, "Expected state to be START Debounce");
+        }
+        else if (i <= ((START * OSR) / 2))
+        {
+            TEST_ASSERT_EQUAL_MESSAGE(STATE_START_VALID, tb->d_state, "Expected state to be START Valid");
+        }
+        else // (i < (START * OSR)
+        {
+            TEST_ASSERT_EQUAL_MESSAGE(STATE_START, tb->d_state, "Expected state to be START");
+        }
     }
+
+    tick();
+    TEST_ASSERT_EQUAL_MESSAGE(STATE_DATA_D0, tb->d_state, "Expected state to be D0");
 
     // Data Bits
     uint32_t temp;
@@ -126,21 +143,33 @@ void receive(uint8_t data_in)
         }
     }
 
+    tick();
+    TEST_ASSERT_EQUAL_MESSAGE(STATE_STOP, tb->d_state, "Expected state to be STOP");
+
     // Stop Bits 
     tb->i_rx = 1;
-    for (uint32_t i = 0; i < STOP * OSR; i++)
+    for (uint32_t i = 0; i < (STOP * OSR) - 1; i++)
     {
         tick();
+        TEST_ASSERT_EQUAL_MESSAGE(STATE_STOP, tb->d_state, "Expected state to be STOP");
     }
     tb->i_rx = 0;
+
+    tick();
+    TEST_ASSERT_EQUAL_MESSAGE(STATE_IDLE, tb->d_state, "Expected FINAL state to be IDLE");
 
     // Done
 }
 
 TEST(uart_rx, test_receive_single)
 {
-    trace->open("test_receive.vcd");
+    // trace->open("test_receive.vcd");
+    receive(0xAA);
+    TEST_ASSERT_EQUAL_MESSAGE(0xAA, tb->o_data, "Expected data to match (0xAA)");
+}
 
+TEST(uart_rx, test_receive_all)
+{
     for (int i = 0; i < 0xFF; i++)
     {
         receive(i);
@@ -148,6 +177,34 @@ TEST(uart_rx, test_receive_single)
         for (int i = 0; i < 10; i ++) tick();
 
         TEST_ASSERT_EQUAL_MESSAGE(i, tb->o_data, "Expected data to match");
+    }
+}
+
+void pulse(uint8_t width)
+{
+    // State should be IDLE
+    tb->i_en = 1;
+    tick();
+
+    TEST_ASSERT_EQUAL_MESSAGE(STATE_IDLE, tb->d_state, "Expected state to be IDLE");
+
+    // Start Bit pulse
+    tb->i_rx = 1;
+    for (uint32_t i = 0; i < width; i++) tick();
+    tb->i_rx = 0;
+
+    // The start bit has a debouncer - which means that we have to make more the
+    // 4 clocks to get to the bit width bits
+    for (uint32_t i = 0; i < ((START * OSR)/2) - width; i++) tick();
+}
+
+TEST(uart_rx, test_ignore_pulse)
+{
+    trace->open("test_ignore_pulse.vcd");
+    for (int i = 0; i < 8; i++)
+    {
+        pulse(i);
+        TEST_ASSERT_EQUAL_MESSAGE(STATE_IDLE, tb->d_state, "Expected state to return to IDLE with short pulse");
     }
 }
 
