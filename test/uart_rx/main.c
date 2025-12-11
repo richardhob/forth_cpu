@@ -9,7 +9,7 @@ VerilatedVcdC * trace;
 
 void run_all_tests(void)
 {
-    RUN_TEST_GROUP(uart_first_bit);
+    RUN_TEST_GROUP(uart_rx);
 }
 
 int main(int argc, const char ** argv)

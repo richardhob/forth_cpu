@@ -53,7 +53,8 @@ localparam STATE_DATA_D4            =  9;
 localparam STATE_DATA_D5            = 10;
 localparam STATE_DATA_D6            = 11;
 localparam STATE_DATA_D7            = 12;
-localparam STATE_STOP               = 13;
+localparam STATE_DATA_END           = 13;
+localparam STATE_STOP               = 14;
 
 output reg [31:0] d_state;
 initial d_state = STATE_RESET;
@@ -94,25 +95,27 @@ begin
 
             STATE_START_DEBOUNCE:
             begin
-                if (start_counter < START_THRESHOLD_DEBOUNCE) d_state <= STATE_START_VALID;
+                if (start_counter > START_THRESHOLD_DEBOUNCE) d_state <= STATE_START_VALID;
                 start_counter <= start_counter + 1;
             end
 
             STATE_START_VALID:
             begin
-                if (i_rx == 0) d_state <= STATE_IDLE;
-                else if (start_counter < START_THRESHOLD) start_counter += 1;
-                else 
+                start_counter += 1;
+                if ((start_counter < START_THRESHOLD_OK) && (i_rx == 0)) d_state <= STATE_IDLE;
+                else if (start_counter >= START_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D0;
                     data_counter <= 0;
+                    o_ready <= 0;
+                    d_data <= 0;
                 end
             end
 
             STATE_DATA_D0:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D0)
+                if (data_counter >= D0_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D1;
                     d_data[0] <= i_rx;
@@ -122,7 +125,7 @@ begin
             STATE_DATA_D1:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D1)
+                if (data_counter >= D1_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D2;
                     d_data[1] <= i_rx;
@@ -132,7 +135,7 @@ begin
             STATE_DATA_D2:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D2)
+                if (data_counter >= D2_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D3;
                     d_data[2] <= i_rx;
@@ -142,7 +145,7 @@ begin
             STATE_DATA_D3:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D3)
+                if (data_counter >= D3_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D4;
                     d_data[3] <= i_rx;
@@ -152,7 +155,7 @@ begin
             STATE_DATA_D4:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D4)
+                if (data_counter >= D4_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D5;
                     d_data[4] <= i_rx;
@@ -162,7 +165,7 @@ begin
             STATE_DATA_D5:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D5)
+                if (data_counter >= D5_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D6;
                     d_data[5] <= i_rx;
@@ -172,7 +175,7 @@ begin
             STATE_DATA_D6:
             begin
                 data_counter <= data_counter + 1;
-                if (data_counter >= STATE_DATA_D6)
+                if (data_counter >= D6_THRESHOLD)
                 begin
                     d_state <= STATE_DATA_D7;
                     d_data[6] <= i_rx;
@@ -181,13 +184,25 @@ begin
 
             STATE_DATA_D7:
             begin
-                if (data_counter >= STATE_DATA_D7)
+                if (data_counter < D7_THRESHOLD) data_counter <= data_counter + 1;
+                else
                 begin
-                    d_state <= STATE_STOP;
                     d_data[7] <= i_rx;
-                    stop_counter <= 0;
+                    d_state <= STATE_DATA_END;
                 end
-                data_counter <= data_counter + 1;
+            end
+
+            STATE_DATA_END:
+            begin
+                if (data_counter < DATA_THRESHOLD) data_counter <= data_counter + 1;
+                else
+                begin
+                    stop_counter <= 0;
+                    o_data <= d_data;
+                    o_ready <= 1;
+
+                    d_state <= STATE_STOP;
+                end
             end
 
             STATE_STOP:
