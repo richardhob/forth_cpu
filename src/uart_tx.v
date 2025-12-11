@@ -21,8 +21,6 @@ parameter DATA       = 8;
 parameter STOP       = 2;
 parameter COOLDOWN   = 1;
 
-parameter CLOCK_RATE = 120000000; // Hz
-parameter BAUDRATE   = 115200;    // Baud rate (bits / second)
 parameter OSR        = 16;        // Over Sample Ratio
 
 localparam START_THRESHOLD    = START * OSR;
@@ -39,7 +37,6 @@ localparam COOLDOWN_BITS      = $clog2(COOLDOWN_THRESHOLD) + 1;
 
 localparam OSR_BITS = $clog2(OSR);
 localparam TOTAL_BITS = DATA + STOP + START;
-localparam DIVIDER_RATIO = CLOCK_RATE / (BAUDRATE * TOTAL_BITS);
 
 input wire i_divided_clk;
 input wire i_rst;
