@@ -41,89 +41,78 @@ reg [LINES_BITS - 1:0]       line_index;
 reg [WIDTH_BITS - 1:0]       sent_width_index;
 reg [LINES_BITS - 1:0]       sent_line_index;
 
-reg did_i_ready;
-reg [DATA_WIDTH-1:0] temp;
-reg [DATA_WIDTH-1:0] o_temp;
-
-// How do we keep track of lines that have been sent? I think it's save to
-// assume that we can process the lines faster than we can record them IN
-// GENERAL... 
-//
-// Let's just assume this is the case for now. We can put the burden on the
-// parser later to encode things and stuff timely.
-//
-// We'll start simple, and redesign later.
+reg prev_i_ready;
+reg prev_i_next;
 
 always @(posedge i_clk or posedge i_rst)
 begin
     if (1 == i_rst)
     begin
-        width_index <= 0;
-        line_index <= 0;
+        width_index = 0;
+        line_index = 0;
 
-        sent_width_index <= 0;
-        sent_line_index <= 0;
+        sent_width_index = 0;
+        sent_line_index = 0;
 
-        o_data_ready <= 0;
-        o_wc <= 0;
-        o_eol <= 0;
+        o_data_ready = 0;
+        o_wc = 0;
+        o_eol = 0;
 
-        did_i_ready <= 0;
+        prev_i_ready = 0;
+        prev_i_next = 0;
     end
     else if (1 == i_en)
     begin
-        if (1 == i_ready && 0 == did_i_ready) // Reception portion
+        // Save Data
+        if (1 == i_ready && 0 == prev_i_ready)
         begin
-            did_i_ready <= 1;
-            lines[line_index][width_index] <= i_data;
-            temp <= i_data;
-        end
-        else if (i_ready == 0 && 1 == did_i_ready)
-        begin
-            did_i_ready <= 0;
-            if (temp == EOL)
+            lines[line_index][width_index] = i_data;
+            if (i_data == EOL)
             begin
-                line_index <= line_index + 1;
-                width_index <= 0;
+                line_index = line_index + 1;
+                width_index = 0;
             end
             else width_index <= width_index + 1;
         end
 
-        if (1 == i_next) // Transmission portion
+        // Send portion
+        if (1 == i_next && prev_i_next == 0)
         begin
-            if (line_index != sent_line_index)
+            if (line_index != sent_line_index) // Only send finished lines
             begin
-                if (o_data_ready == 1) 
-                begin
-                    o_data_ready <= 0;
-                    case (o_temp)
-                        EOL:
-                        begin
-                            sent_width_index <= 0;
-                            sent_line_index <= sent_line_index + 1;
-                        end
+                o_data = lines[sent_line_index][sent_width_index];
+                o_data_ready = 1;
 
-                        default: sent_width_index <= sent_width_index + 1;
-                    endcase
-                end
-                else 
-                begin
-                    o_data <= lines[sent_line_index][sent_width_index];
-                    o_temp <= lines[sent_line_index][sent_width_index];
-                    o_data_ready <= 1;
+                case (o_data)
+                    EOL: 
+                    begin
+                        o_eol = 1;
+                        o_wc = 0;
+                        sent_width_index = 0;
+                        sent_line_index = sent_line_index + 1;
+                    end
 
-                    case (lines[sent_line_index][sent_width_index])
-                        EOL: o_eol <= 1;
-                        WC: o_wc <= 1;
-                        default:
-                        begin
-                            o_eol <= 0;
-                            o_wc <= 0;
-                        end
-                    endcase
-                end
+                    WC: 
+                    begin
+                        o_eol = 0;
+                        o_wc = 1;
+                        sent_width_index = sent_width_index + 1;
+                    end
+
+                    default:
+                    begin
+                        o_eol = 0;
+                        o_wc = 0;
+                        sent_width_index = sent_width_index + 1;
+                    end
+                endcase
+
+                o_data_ready = 1;
             end
         end
+
+        prev_i_ready = i_ready;
+        prev_i_next = i_next;
     end
 end
 

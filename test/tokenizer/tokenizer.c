@@ -91,30 +91,23 @@ TEST(tokenizer, test_eol)
     tb->i_ready = 1;
 
     tick();
-    tick();
 
     tb->i_ready = 0;
 
-    tick();
     tick();
 
     tb->i_data = '\n';
     tb->i_ready = 1;
 
     tick();
-    tick();
 
     tb->i_ready = 0;
-    tick();
-
     tb->i_next = 1;
 
-    tick();
     tick();
 
     tb->i_next = 0;
 
-    tick();
     tick();
 
     tb->i_next = 1;
