@@ -9,6 +9,7 @@ _PROJECTS:=clock_divider\
           counter\
           fifo\
           shift\
+          example_uart_rx_to_tx\
           uart_rx\
           uart_tx
 PROJECTS=$(abspath $(_PROJECTS))

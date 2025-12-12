@@ -80,6 +80,8 @@ begin
         data_counter <= 0;
         stop_counter <= 0;
         d_data <= 0;
+        o_data <= 0;
+        o_ready <= 0;
     end
     else if (1 == i_en)
     begin
@@ -90,6 +92,7 @@ begin
                 begin
                     d_state <= STATE_START_DEBOUNCE;
                     start_counter <= 0;
+                    o_ready <= 0;
                 end
             end
 

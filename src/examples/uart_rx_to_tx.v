@@ -1,27 +1,14 @@
 
-module uart_rx_to_tx (i_clk, i_rst, i_rx, o_tx);
+module uart_rx_to_tx (i_clk, i_rst, i_en, i_rx, o_tx);
+
+parameter OSR = 16;
 
 input wire i_clk;
 input wire i_rst;
+input wire i_en;
+
 input wire i_rx;
-
 output reg o_tx;
-
-wire divided_clk;
-
-parameter CLOCK    = 125000000;
-parameter BAUDRATE = 115200;
-parameter OSR      = 16;
-localparam DIVIDER = (CLOCK / (OSR * BAUDRATE));
-
-// Divide the clock
-clock_divider #(
-    .DIVIDER(DIVIDER)
-) divider (
-    .i_rst(i_rst), 
-    .i_clk(i_clk),
-    .o_clk(divided_clk)
-);
 
 wire [7:0] rx_data;
 wire rx_data_ready;
@@ -33,9 +20,9 @@ assign _i_rx = ~i_rx;
 uart_rx #(
     .OSR(OSR)
 ) rx (
-    .i_divided_clk(divided_clk),
+    .i_divided_clk(i_clk),
     .i_rst(i_rst),
-    .i_en(1'b1),
+    .i_en(i_en),
     .i_rx(_i_rx),
     .o_data(rx_data),
     .o_ready(rx_data_ready),
@@ -54,9 +41,9 @@ assign o_tx = ~_o_tx;
 uart_tx #(
     .OSR(OSR)
 ) tx (
-    .i_divided_clk(divided_clk),
+    .i_divided_clk(i_clk),
     .i_rst(i_rst),
-    .i_en(1'b1),
+    .i_en(i_en),
     .i_data(rx_data),
     .i_ready(rx_data_ready),
     .o_next(),
