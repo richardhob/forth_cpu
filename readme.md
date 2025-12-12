@@ -7,7 +7,5 @@ things instead of explicit registers.
 
 - [Software](software.md)
 - [Plan](plan.md)
+- [UART Details](uart.md)
 
-## Verilog Modules
-
-- [FIFO](src/fifo/readme.md)
