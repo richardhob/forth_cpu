@@ -9,7 +9,7 @@ SRC  := find_index.c main.c
 VSRC := find_index.v
 
 ROOT := ../../src
-VPATH := $(ROOT) $(ROOT)/dict
+VPATH := $(ROOT)
 VFLAGS := $(addprefix -I,$(VPATH))
 
 vpath %.v $(VPATH)

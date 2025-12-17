@@ -11,7 +11,9 @@ _PROJECTS:=clock_divider\
           shift\
           example_uart_rx_to_tx\
           uart_rx\
-          uart_tx
+          uart_tx\
+          find_index\
+          dict
 PROJECTS=$(abspath $(_PROJECTS))
 
 .PHONY: all

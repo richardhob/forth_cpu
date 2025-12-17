@@ -4,7 +4,7 @@ parameter ENTRIES = 2;
 parameter KEY_WIDTH = 8;
 parameter KEY_LENGTH = 1;
 
-localparam INDEX_BITS = $clog2(ENTRIES) + 1;
+localparam INDEX_BITS = $clog2(ENTRIES);
 
 input wire i_update;
 input wire [KEY_WIDTH-1:0] i_key [KEY_LENGTH-1:0];
