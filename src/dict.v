@@ -62,7 +62,7 @@ find_index #(
 
 localparam OP_SET = 0;
 localparam OP_GET = 1;
-localparam OP_ENCODE = 2;
+localparam OP_ENCODE = 3;
 localparam OP_SET_FAST = 3;
 localparam OP_GET_FAST = 4;
 
@@ -81,52 +81,73 @@ begin
         o_index <= 0;
 
         d_state <= STATE_IDLE;
+
+        // Delete KEYS and VALUES on RESET
+        for (int i = 0; i < ENTRIES; i++)
+        begin
+            for (int j = 0; j < KEY_LENGTH; j++)
+            begin
+                keys[i][j] <= 0;
+            end
+
+            for (int k = 0; k < VALUE_LENGTH; k++)
+            begin
+                values[i][k] <= 0;
+            end
+        end
+        for (int l = 0; l < VALUE_LENGTH; l++)
+        begin
+            o_value[l] <= 0;
+        end
     end
     else if (1 == i_en)
     begin
-        if (STATE_IDLE == d_state)
+        if (1 == i_ready)
         begin
-            if (o_done == 1) o_done <= 0;
-            case (i_op)
-                OP_SET:
-                begin
-                    update_index <= 1;
-                    d_state <= STATE_SET;
-                end
+            if (STATE_IDLE == d_state)
+            begin
+                case (i_op)
+                    OP_SET:
+                    begin
+                        update_index <= 1;
+                        d_state <= STATE_SET;
+                    end
 
-                OP_GET:
-                begin
-                    update_index <= 1;
-                    d_state <= STATE_SET;
-                end
+                    OP_GET:
+                    begin
+                        update_index <= 1;
+                        d_state <= STATE_GET;
+                    end
 
-                OP_ENCODE:
-                begin
-                    update_index <= 1;
-                    d_state <= STATE_ENCODE;
-                end
+                    OP_ENCODE:
+                    begin
+                        update_index <= 1;
+                        d_state <= STATE_ENCODE;
+                    end
 
-                OP_SET_FAST:
-                begin
-                    values[i_index] <= i_value;
-                    o_done <= 1;
-                end
+                    OP_SET_FAST:
+                    begin
+                        values[i_index] <= i_value;
+                        o_done <= 1;
+                    end
 
-                OP_GET_FAST:
-                begin
-                    o_value <= values[i_index];
-                    o_done <= 1;
-                end
+                    OP_GET_FAST:
+                    begin
+                        o_value <= values[i_index];
+                        o_done <= 1;
+                    end
 
-                default:
-                begin
-                    update_index <= 1;
-                    d_state <= STATE_IDLE;
-                end
-            endcase
+                    default:
+                    begin
+                        update_index <= 1;
+                        d_state <= STATE_IDLE;
+                    end
+                endcase
+            end
         end
-        else if(STATE_SET == d_state)
+        if(STATE_SET == d_state)
         begin
+            keys[index] <= i_key;
             values[index] <= i_value;
             o_done <= 1;
             d_state <= STATE_IDLE;
@@ -137,12 +158,14 @@ begin
             o_done <= 1;
             d_state <= STATE_IDLE;
         end
-        else // if (STATE_ENCODE == d_state)
+        else if (STATE_ENCODE == d_state)
         begin
             o_index <= index;
             o_done <= 1;
             d_state <= STATE_IDLE;
         end
+        else // STATE_IDLE == d_state
+            o_done <= 0;
     end
 end
 
