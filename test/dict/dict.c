@@ -181,4 +181,36 @@ TEST(dict, test_get_single)
     TEST_ASSERT_EQUAL(0xDEADBEEF, tb->o_value[0]);
 }
 
+uint32_t get(const char * name, uint32_t length)
+{
+    tb->i_value[0] = 0;
+    tb->i_op = OP_GET;
+
+    for (uint32_t i = 0; i < length; i++)
+    {
+        tb->i_key[i] = name[i];
+    }
+
+    tb->i_ready = 1;
+
+    tick();
+    tick();
+}
+
+TEST(dict, test_set_get)
+{
+    set("first",  5, 0x01);
+    uint32_t a = get("first",  5);
+
+    set("second", 6, 0x02);
+    uint32_t b = get("second", 6);
+
+    set("third",  5, 0x03);
+    uint32_t c = get("second", 6);
+
+    TEST_ASSERT_EQUAL(1, a);
+    TEST_ASSERT_EQUAL(2, b);
+    TEST_ASSERT_EQUAL(3, c);
+}
+
 // EOF
