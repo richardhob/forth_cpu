@@ -94,6 +94,7 @@ TEST_TEAR_DOWN(dict)
 
 TEST_GROUP_RUNNER(dict)
 {
+    RUN_TEST_CASE(dict, test_set_get);
     RUN_TEST_CASE(dict, test_reset);
     RUN_TEST_CASE(dict, test_set_single);
     RUN_TEST_CASE(dict, test_get_single);
@@ -176,19 +177,22 @@ TEST(dict, test_get_single)
 
     TEST_ASSERT_EQUAL(1, tb->o_done);
     TEST_ASSERT_EQUAL(0, tb->o_index);
-    TEST_ASSERT_EQUAL(0, tb->o_index);
     TEST_ASSERT_EQUAL(STATE_IDLE, tb->d_state);
     TEST_ASSERT_EQUAL(0xDEADBEEF, tb->o_value[0]);
 }
 
-uint32_t get(const char * name, uint32_t length)
+void get(const char * name, uint32_t length)
 {
-    tb->i_value[0] = 0;
     tb->i_op = OP_GET;
 
     for (uint32_t i = 0; i < length; i++)
     {
         tb->i_key[i] = name[i];
+    }
+
+    for (uint32_t i = length; i < KEY_LENGTH; i++)
+    {
+        tb->i_key[i] = 0;
     }
 
     tb->i_ready = 1;
@@ -200,17 +204,18 @@ uint32_t get(const char * name, uint32_t length)
 TEST(dict, test_set_get)
 {
     set("first",  5, 0x01);
-    uint32_t a = get("first",  5);
+
+    TEST_ASSERT_EQUAL(1, tb->o_done);
+    TEST_ASSERT_EQUAL(0, tb->o_index);
+    TEST_ASSERT_EQUAL(0, tb->o_value[0]);
+
+    get("first",  5);
 
     set("second", 6, 0x02);
-    uint32_t b = get("second", 6);
+    get("second", 6);
 
     set("third",  5, 0x03);
-    uint32_t c = get("second", 6);
-
-    TEST_ASSERT_EQUAL(1, a);
-    TEST_ASSERT_EQUAL(2, b);
-    TEST_ASSERT_EQUAL(3, c);
+    get("third",  5);
 }
 
 // EOF

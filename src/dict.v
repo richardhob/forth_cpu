@@ -28,7 +28,7 @@ input wire i_rst;
 input wire i_en;
 
 input wire i_ready;
-input wire [2:0] i_op; // set, get, set_fast, get_fast, encode
+input wire [2:0] i_op; // set, get, set_fast, get_fast, encode, delete, quick_delete
 
 input wire [KEY_WIDTH-1:0] i_key [KEY_LENGTH-1:0];
 input wire [ENTRIES_BITS - 1:0] i_index;
@@ -38,7 +38,7 @@ output reg o_done;
 output reg [VALUE_WIDTH-1:0] o_value [VALUE_LENGTH-1:0];
 output reg [ENTRIES_BITS-1:0] o_index;
 
-output reg [1:0] d_state;
+output reg [2:0] d_state;
 initial d_state = STATE_IDLE;
 
 reg [KEY_WIDTH-1:0] keys [ENTRIES-1:0][KEY_LENGTH-1:0];
@@ -65,11 +65,14 @@ localparam OP_GET = 1;
 localparam OP_ENCODE = 3;
 localparam OP_SET_FAST = 3;
 localparam OP_GET_FAST = 4;
+localparam OP_DELETE = 5;
+localparam OP_DELETE_FAST = 6;
 
 localparam STATE_IDLE = 0;
 localparam STATE_SET = 1;
 localparam STATE_GET = 2;
 localparam STATE_ENCODE = 3;
+localparam STATE_DELETE = 4;
 
 always @(posedge i_clk or posedge i_rst)
 begin
@@ -119,6 +122,12 @@ begin
                         d_state <= STATE_GET;
                     end
 
+                    OP_DELETE:
+                    begin
+                        update_index <= 1;
+                        d_state <= STATE_DELETE;
+                    end
+
                     OP_ENCODE:
                     begin
                         update_index <= 1;
@@ -128,12 +137,26 @@ begin
                     OP_SET_FAST:
                     begin
                         values[i_index] <= i_value;
+                        o_value <= 0;
+                        o_index <= i_index;
                         o_done <= 1;
                     end
 
                     OP_GET_FAST:
                     begin
                         o_value <= values[i_index];
+                        o_index <= i_index;
+                        o_done <= 1;
+                    end
+
+                    OP_DELETE_FAST:
+                    begin
+                        o_value <= values[i_index];
+                        o_index <= i_index;
+
+                        for (int i = 0; i < KEY_LENGTH; i++) keys[i_index] <= 0;
+                        for (int i = 0; i < VALUE_LENGTH; i++) values[i_index] <= 0;
+
                         o_done <= 1;
                     end
 
@@ -149,20 +172,34 @@ begin
         begin
             keys[index] <= i_key;
             values[index] <= i_value;
+            o_value <= 0;
+            o_index <= index;
             o_done <= 1;
             d_state <= STATE_IDLE;
         end
         else if(STATE_GET == d_state)
         begin
             o_value <= values[index];
+            o_index <= index;
             o_done <= 1;
             d_state <= STATE_IDLE;
         end
         else if (STATE_ENCODE == d_state)
         begin
             o_index <= index;
+            o_value <= 0;
             o_done <= 1;
             d_state <= STATE_IDLE;
+        end
+        else if (STATE_DELETE == d_state)
+        begin
+            o_index <= index;
+            o_value <= values[index];
+
+            for (int i = 0; i < KEY_LENGTH; i++) keys[index] <= 0;
+            for (int i = 0; i < VALUE_LENGTH; i++) values[index] <= 0;
+
+            o_done <= 1;
         end
         else // STATE_IDLE == d_state
             o_done <= 0;
