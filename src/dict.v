@@ -69,6 +69,7 @@ find_index #(
 reg [KEY_WIDTH-1:0] empty_key [KEY_LENGTH-1:0];
 reg [VALUE_WIDTH-1:0] empty_value [VALUE_LENGTH-1:0];
 wire [ENTRIES_BITS-1:0] index_empty;
+wire found_empty;
 
 find_index #(
     .ENTRIES(ENTRIES),
@@ -79,12 +80,12 @@ find_index #(
     .i_key(empty_key),
     .i_keys(keys),
     .o_index(index_empty),
-    .d_found()
+    .d_found(found_empty)
 );
 
 localparam OP_SET = 0;
 localparam OP_GET = 1;
-localparam OP_ENCODE = 3;
+localparam OP_ENCODE = 2;
 localparam OP_SET_FAST = 3;
 localparam OP_GET_FAST = 4;
 localparam OP_DELETE = 5;
@@ -163,9 +164,9 @@ begin
                 OP_SET_FAST:
                 begin
                     keys[i_index] <= i_key;
-                    values[i_index] <= i_value;
                     o_index <= i_index;
                     o_done <= 1;
+                    o_err <= 0;
                 end
 
                 OP_GET_FAST:
@@ -173,6 +174,7 @@ begin
                     o_value <= values[i_index];
                     o_index <= i_index;
                     o_done <= 1;
+                    o_err <= 0;
                 end
 
                 OP_DELETE_FAST:
@@ -185,11 +187,12 @@ begin
                     for (int i = 0; i < VALUE_LENGTH; i++) values[i_index] <= empty_value;
 
                     o_done <= 1;
+                    o_err <= 0;
                 end
 
                 default:
                 begin
-                    update_index <= 1;
+                    // update_index <= 1;
                     d_state <= STATE_IDLE;
                 end
             endcase
@@ -201,15 +204,20 @@ begin
                 keys[index] <= i_key;
                 values[index] <= i_value;
                 o_index <= index;
+                o_err <= 0;
             end
-            else 
+            else if (1'b1 == found_empty)
             begin
                 keys[index_empty] <= i_key;
                 values[index_empty] <= i_value;
                 o_index <= index_empty;
+                o_err <= 0;
+            end
+            else // Error - No place to save data
+            begin
+                o_err <= 1;
             end
             o_done <= 1;
-            o_err <= 0;
             d_state <= STATE_IDLE;
             update_index <= 0;
         end
@@ -223,8 +231,8 @@ begin
             end
             else
             begin
-                o_value <= values[index];
-                o_index <= index;
+                o_value <= empty_value;
+                o_index <= 0;
                 o_err <= 1;
             end
             o_done <= 1;
@@ -263,6 +271,7 @@ begin
             else
             begin
                 o_index <= 0;
+                o_value <= empty_value;
                 o_err <= 1;
             end
             o_done <= 1;
