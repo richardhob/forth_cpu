@@ -28,6 +28,7 @@ begin
             /* verilator lint_off WIDTHTRUNC */
             o_index = i;
             /* verilator lint_on WIDTHTRUNC */
+
             d_found = 1;
         end
     end
