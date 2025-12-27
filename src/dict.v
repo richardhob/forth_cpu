@@ -11,12 +11,12 @@
 //
 // There is also "ENCODE" which retreives the index
 
-module dict(i_clk, i_rst, i_en, i_ready, i_op, i_key, i_index, i_value, o_value, o_index, o_done, d_state);
+module dict(i_clk, i_rst, i_en, i_ready, i_op, i_key, i_index, i_value, o_value, o_index, o_done, o_err, d_state);
 
 parameter ENTRIES = 10;
 
 parameter KEY_WIDTH = 8;
-parameter KEY_LENGTH = 8;
+parameter KEY_LENGTH = 1; 
 
 parameter VALUE_WIDTH = 32;
 parameter VALUE_LENGTH = 1;
@@ -38,6 +38,9 @@ output reg o_done;
 output reg [VALUE_WIDTH-1:0] o_value [VALUE_LENGTH-1:0];
 output reg [ENTRIES_BITS-1:0] o_index;
 
+// Error (which can happen on a OP_GET or OP_DELETE or OP_ENCODE if the key isn't found)
+output reg o_err; 
+
 output reg [2:0] d_state;
 initial d_state = STATE_IDLE;
 
@@ -45,8 +48,11 @@ reg [KEY_WIDTH-1:0] keys [ENTRIES-1:0][KEY_LENGTH-1:0];
 reg [VALUE_WIDTH-1:0] values [ENTRIES-1:0][VALUE_LENGTH-1:0];
 
 wire [ENTRIES_BITS-1:0] index;
+
 reg update_index;
 initial update_index = 0;
+
+wire found_key;
 
 find_index #(
     .ENTRIES(ENTRIES),
@@ -57,6 +63,22 @@ find_index #(
     .i_key(i_key),
     .i_keys(keys),
     .o_index(index),
+    .d_found(found_key)
+);
+
+reg [KEY_WIDTH-1:0] empty_key [KEY_LENGTH-1:0];
+reg [VALUE_WIDTH-1:0] empty_value [VALUE_LENGTH-1:0];
+wire [ENTRIES_BITS-1:0] index_empty;
+
+find_index #(
+    .ENTRIES(ENTRIES),
+    .KEY_WIDTH(KEY_WIDTH),
+    .KEY_LENGTH(KEY_LENGTH)
+) find_empty (
+    .i_update(update_index),
+    .i_key(empty_key),
+    .i_keys(keys),
+    .o_index(index_empty),
     .d_found()
 );
 
@@ -82,6 +104,7 @@ begin
 
         o_done <= 0;
         o_index <= 0;
+        o_err <= 0;
 
         d_state <= STATE_IDLE;
 
@@ -101,108 +124,157 @@ begin
         for (int l = 0; l < VALUE_LENGTH; l++)
         begin
             o_value[l] <= 0;
+            empty_value[l] <= 0;
+        end
+        for (int m = 0; m < KEY_LENGTH; m++)
+        begin
+            empty_key[m] <= 0;
         end
     end
     else if (1 == i_en)
     begin
-        if (1 == i_ready)
+        if (1 == i_ready && d_state == STATE_IDLE)
         begin
-            if (STATE_IDLE == d_state)
-            begin
-                case (i_op)
-                    OP_SET:
-                    begin
-                        update_index <= 1;
-                        d_state <= STATE_SET;
-                    end
+            case (i_op)
+                OP_SET:
+                begin
+                    update_index <= 1;
+                    d_state <= STATE_SET;
+                end
 
-                    OP_GET:
-                    begin
-                        update_index <= 1;
-                        d_state <= STATE_GET;
-                    end
+                OP_GET:
+                begin
+                    update_index <= 1;
+                    d_state <= STATE_GET;
+                end
 
-                    OP_DELETE:
-                    begin
-                        update_index <= 1;
-                        d_state <= STATE_DELETE;
-                    end
+                OP_DELETE:
+                begin
+                    update_index <= 1;
+                    d_state <= STATE_DELETE;
+                end
 
-                    OP_ENCODE:
-                    begin
-                        update_index <= 1;
-                        d_state <= STATE_ENCODE;
-                    end
+                OP_ENCODE:
+                begin
+                    update_index <= 1;
+                    d_state <= STATE_ENCODE;
+                end
 
-                    OP_SET_FAST:
-                    begin
-                        values[i_index] <= i_value;
-                        o_value <= 0;
-                        o_index <= i_index;
-                        o_done <= 1;
-                    end
+                OP_SET_FAST:
+                begin
+                    keys[i_index] <= i_key;
+                    values[i_index] <= i_value;
+                    o_index <= i_index;
+                    o_done <= 1;
+                end
 
-                    OP_GET_FAST:
-                    begin
-                        o_value <= values[i_index];
-                        o_index <= i_index;
-                        o_done <= 1;
-                    end
+                OP_GET_FAST:
+                begin
+                    o_value <= values[i_index];
+                    o_index <= i_index;
+                    o_done <= 1;
+                end
 
-                    OP_DELETE_FAST:
-                    begin
-                        o_value <= values[i_index];
-                        o_index <= i_index;
+                OP_DELETE_FAST:
+                begin
+                    o_value <= values[i_index];
+                    o_index <= i_index;
 
-                        for (int i = 0; i < KEY_LENGTH; i++) keys[i_index] <= 0;
-                        for (int i = 0; i < VALUE_LENGTH; i++) values[i_index] <= 0;
+                    // ERASE
+                    for (int i = 0; i < KEY_LENGTH; i++) keys[i_index] <= empty_key;
+                    for (int i = 0; i < VALUE_LENGTH; i++) values[i_index] <= empty_value;
 
-                        o_done <= 1;
-                    end
+                    o_done <= 1;
+                end
 
-                    default:
-                    begin
-                        update_index <= 1;
-                        d_state <= STATE_IDLE;
-                    end
-                endcase
-            end
+                default:
+                begin
+                    update_index <= 1;
+                    d_state <= STATE_IDLE;
+                end
+            endcase
         end
-        if(STATE_SET == d_state)
+        else if(STATE_SET == d_state)
         begin
-            keys[index] <= i_key;
-            values[index] <= i_value;
-            o_value <= 0;
-            o_index <= index;
+            if (1'b1 == found_key)
+            begin
+                keys[index] <= i_key;
+                values[index] <= i_value;
+                o_index <= index;
+            end
+            else 
+            begin
+                keys[index_empty] <= i_key;
+                values[index_empty] <= i_value;
+                o_index <= index_empty;
+            end
             o_done <= 1;
+            o_err <= 0;
             d_state <= STATE_IDLE;
+            update_index <= 0;
         end
         else if(STATE_GET == d_state)
         begin
-            o_value <= values[index];
-            o_index <= index;
+            if (1'b1 == found_key)
+            begin
+                o_value <= values[index];
+                o_index <= index;
+                o_err <= 0;
+            end
+            else
+            begin
+                o_value <= values[index];
+                o_index <= index;
+                o_err <= 1;
+            end
             o_done <= 1;
             d_state <= STATE_IDLE;
+            update_index <= 0;
         end
         else if (STATE_ENCODE == d_state)
         begin
-            o_index <= index;
-            o_value <= 0;
+            if (1'b1 == found_key)
+            begin
+                o_index <= index;
+                o_err <= 0;
+            end
+            else
+            begin
+                o_index <= 0;
+                o_err <= 1;
+            end
             o_done <= 1;
             d_state <= STATE_IDLE;
+            update_index <= 0;
         end
         else if (STATE_DELETE == d_state)
         begin
-            o_index <= index;
-            o_value <= values[index];
+            if (1'b1 == found_key)
+            begin
+                o_index <= index;
+                o_value <= values[index];
 
-            for (int i = 0; i < KEY_LENGTH; i++) keys[index] <= 0;
-            for (int i = 0; i < VALUE_LENGTH; i++) values[index] <= 0;
+                // ERASE
+                for (int i = 0; i < KEY_LENGTH; i++) keys[index] <= empty_key;
+                for (int i = 0; i < VALUE_LENGTH; i++) values[index] <= empty_value;
 
+                o_err <= 0;
+            end
+            else
+            begin
+                o_index <= 0;
+                o_err <= 1;
+            end
             o_done <= 1;
+            d_state <= STATE_IDLE;
+            update_index <= 0;
         end
         else // STATE_IDLE == d_state
+        begin
             o_done <= 0;
+            d_state <= STATE_IDLE;
+            update_index <= 0;
+        end
     end
 end
 
