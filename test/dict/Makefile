@@ -5,7 +5,7 @@ CC = g++
 CFLAGS = -g -Og -I$(abspath ../unity)
 LDFLAGS = -L$(abspath ..) -lunity
 
-SRC  := dict.c main.c
+SRC  := apis.c dict.c main.c
 VSRC := dict.v
 
 ROOT := ../../src
