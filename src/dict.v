@@ -63,7 +63,7 @@ find_index #(
     .i_key(i_key),
     .i_keys(keys),
     .o_index(index),
-    .d_found(found_key)
+    .o_found(found_key)
 );
 
 reg [KEY_WIDTH-1:0] empty_key [KEY_LENGTH-1:0];
@@ -80,7 +80,7 @@ find_index #(
     .i_key(empty_key),
     .i_keys(keys),
     .o_index(index_empty),
-    .d_found(found_empty)
+    .o_found(found_empty)
 );
 
 localparam OP_SET = 0;

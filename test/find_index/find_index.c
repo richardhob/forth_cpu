@@ -71,7 +71,7 @@ TEST(find_index, test_duplicate_lowest_index)
 
     tick();
 
-    TEST_ASSERT_EQUAL(tb->d_found, 1);
+    TEST_ASSERT_EQUAL(tb->o_found, 1);
     TEST_ASSERT_EQUAL(tb->o_index, 0);
 }
 
@@ -83,7 +83,7 @@ TEST(find_index, test_first)
 
     tick();
 
-    TEST_ASSERT_EQUAL(tb->d_found, 1);
+    TEST_ASSERT_EQUAL(tb->o_found, 1);
     TEST_ASSERT_EQUAL(tb->o_index, 0);
 }
 
@@ -95,7 +95,7 @@ TEST(find_index, test_second)
 
     tick();
 
-    TEST_ASSERT_EQUAL(tb->d_found, 1);
+    TEST_ASSERT_EQUAL(tb->o_found, 1);
     TEST_ASSERT_EQUAL(tb->o_index, 1);
 }
 
@@ -109,7 +109,7 @@ TEST(find_index, test_first_all)
 
         tick();
 
-        TEST_ASSERT_EQUAL(tb->d_found, 1);
+        TEST_ASSERT_EQUAL(tb->o_found, 1);
         TEST_ASSERT_EQUAL(tb->o_index, 0);
     }
 }
@@ -124,7 +124,7 @@ TEST(find_index, test_second_all)
 
         tick();
 
-        TEST_ASSERT_EQUAL(tb->d_found, 1);
+        TEST_ASSERT_EQUAL(tb->o_found, 1);
         TEST_ASSERT_EQUAL(tb->o_index, 1);
     }
 }
@@ -139,7 +139,7 @@ TEST(find_index, test_not_present)
 
         tick();
 
-        TEST_ASSERT_EQUAL(tb->d_found, 0);
+        TEST_ASSERT_EQUAL(tb->o_found, 0);
         TEST_ASSERT_EQUAL(tb->o_index, 0);
     }
 }

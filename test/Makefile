@@ -14,6 +14,7 @@ _PROJECTS:=clock_divider\
           uart_tx\
           find_index\
           dict
+
 PROJECTS=$(abspath $(_PROJECTS))
 
 .PHONY: all

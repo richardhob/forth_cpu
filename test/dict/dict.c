@@ -1,15 +1,4 @@
 
-// Tests to write:
-//
-// - OP_ENCODE
-// - OP_SET_FAST
-// - OP_GET_FAST
-// - OP_DELETE_FAST
-//
-// - Miss GET
-// - FULL SET
-// - Miss DELETE
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
