@@ -11,8 +11,6 @@ our efforts:
 - eight data bits
 - two stop bits
 
-## Implementation
-
 For my efforts here, it was easiest to implement the RX and TX as separate
 modules (`uart_rx` and `uart_tx`). I used state machines for both, since this
 made everything much easier to adjust.
@@ -24,14 +22,49 @@ block, you have to invert the polarity of the RX and TX lines.
 Reset is active high as well, so invert that probably into the block. Also,
 the clock line is expected to be divided appropriately.
 
-## Example 1: RX to TX
+## TX
 
-Connect the RX directly to the TX, so all messages are echo'd back.
+See:
 
-## Example 2: RX to Tokenizer to TX
+- `uart_tx.v`
 
-Connect the RX to the Tokenizer (looks for '\n'). When a complete line is
-detected, the TX is triggered and the message is echo'd back.
+Parameters:
 
-## Example 3: RX to Tokenizer to Parser to TX
-## Example 4: RX to Tokenizer to Parser to CPU to TX
+- START : Number of UART START Bits (Typically 1)
+- DATA : Number of UART DATA Bits (Typically 8)
+- STOP : Number of UART STOP Bits (Typically 2)
+- COOLDOWN : Number of bits to wait before the next transmission starts (Tyically 1)
+- OSR : Number of samples to take for each bit.
+
+Clock Input:
+
+- `i_divided_clk` -> Divided main clock. It is expected that the provided clock
+  is the buad rate * OSR. 
+
+Normal Inputs:
+
+- `i_rst`
+- `i_en`
+
+UART Signals:
+
+- `i_data` : DATA to transmit (`[DATA-1:0]`)
+- `i_ready` : Start the Transmitter
+- `o_next` : Transmission is Done
+- `o_tx` : UART TX Line
+
+Debug Signals:
+
+- `d_state` : UART TX State 
+- `d_data` : Internal DATA register (cached from `i_data`)
+
+### Reset Procedure
+### Inputs
+### Behavior
+
+
+## RX
+
+See:
+
+- `uart_rx.v`
