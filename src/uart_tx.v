@@ -1,19 +1,6 @@
 
-/* UART TX Transmitter
- *
- * - CLK -> Clock Divider -> Divided Clock
- * - Data 
- * - New Data line (Ready for next data)
- * - Data Ready line
- * - UART TX Out
- *
- *
- * When DATA Ready is high, then:
- *
- * 1. get data
- * 2. Write bits
- * 3. 
- */
+// BUG: OSR Must be a power of two.
+//   Solution: use Dx counters like in `uart_rx` with thresholds
 module uart_tx(i_divided_clk, i_rst, i_en, i_data, i_ready, o_next, o_tx, d_state, d_data);
 
 parameter START      = 1;
@@ -21,7 +8,8 @@ parameter DATA       = 8;
 parameter STOP       = 2;
 parameter COOLDOWN   = 1;
 
-parameter OSR        = 16;        // Over Sample Ratio
+parameter OSR        = 16; // Over Sample Ratio, hard coded to 16 for now
+localparam OSR_BITS           = $clog2(OSR);
 
 localparam START_THRESHOLD    = START * OSR;
 localparam START_BITS         = $clog2(START_THRESHOLD) + 1;
@@ -145,7 +133,7 @@ begin
             begin
                 if (data_bits < (DATA_THRESHOLD - 1))
                 begin
-                    o_tx <= d_data[data_bits + 1 >> 4];
+                    o_tx <= d_data[data_bits + 1 >> OSR_BITS];
                     data_bits <= data_bits + 1;
                 end
                 else
