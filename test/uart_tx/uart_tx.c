@@ -147,7 +147,7 @@ void transmit(uint8_t data)
 TEST(uart_tx, test_transmit_single)
 {
     trace->open("test_transmit.vcd");
-    transmit(0x55);
+    transmit(0x0);
 }
 
 TEST(uart_tx, test_transmit_all)

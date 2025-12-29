@@ -9,7 +9,6 @@ parameter STOP       = 2;
 parameter COOLDOWN   = 1;
 
 parameter OSR        = 16; // Over Sample Ratio, hard coded to 16 for now
-localparam OSR_BITS           = $clog2(OSR);
 
 localparam START_THRESHOLD    = START * OSR;
 localparam START_BITS         = $clog2(START_THRESHOLD) + 1;
@@ -23,7 +22,6 @@ localparam STOP_BITS          = $clog2(STOP_THRESHOLD) + 1;
 localparam COOLDOWN_THRESHOLD = COOLDOWN * OSR;
 localparam COOLDOWN_BITS      = $clog2(COOLDOWN_THRESHOLD) + 1;
 
-localparam OSR_BITS = $clog2(OSR);
 localparam TOTAL_BITS = DATA + STOP + START;
 
 input wire i_divided_clk;
@@ -131,10 +129,33 @@ begin
 
             STATE_DATA:
             begin
-                if (data_bits < (DATA_THRESHOLD - 1))
+                data_bits = data_bits + 1;
+                if (data_bits < DATA_THRESHOLD)
                 begin
-                    o_tx <= d_data[data_bits + 1 >> OSR_BITS];
-                    data_bits <= data_bits + 1;
+                    if (data_bits < OSR) begin
+                        o_tx = d_data[0];
+                    end
+                    else if (data_bits < 2*OSR) begin
+                        o_tx = d_data[1];
+                    end
+                    else if (data_bits < 3*OSR) begin
+                        o_tx = d_data[2];
+                    end
+                    else if (data_bits < 4*OSR) begin
+                        o_tx = d_data[3];
+                    end
+                    else if (data_bits < 5*OSR) begin
+                        o_tx = d_data[4];
+                    end
+                    else if (data_bits < 6*OSR) begin
+                        o_tx = d_data[5];
+                    end
+                    else if (data_bits < 7*OSR) begin
+                        o_tx = d_data[6];
+                    end
+                    else if (data_bits < 8*OSR) begin
+                        o_tx = d_data[7];
+                    end
                 end
                 else
                 begin
