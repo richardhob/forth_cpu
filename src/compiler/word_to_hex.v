@@ -4,7 +4,7 @@
 module word_to_hex(i_clk, i_en, i_word, i_len, o_data, o_err);
 
 localparam DATA_WIDTH = 8; // Character width (also UART width)
-parameter  WIDTH      = 32; // Maximum word width
+parameter  WIDTH      = 32; // Maximum word width (WAY Longer than the data can be)
 parameter  DATA       = 32; // Data width
 
 localparam PREFIX0 = "0";
@@ -29,9 +29,9 @@ begin
     begin
         if (i_word[0] == PREFIX0 && i_word[1] == PREFIX1)
         begin
+            temp = 0;
             for (int i = 2; i < i_len; i++)
             begin
-                temp = 0;
                 o_err = 0;
                 case (i_word[i])
                     "0": temp = (temp << 4);
@@ -44,12 +44,14 @@ begin
                     "7": temp = (temp << 4) + 7;
                     "8": temp = (temp << 4) + 8;
                     "9": temp = (temp << 4) + 9;
+                    // Upper Case
                     "A": temp = (temp << 4) + 10;
                     "B": temp = (temp << 4) + 11;
                     "C": temp = (temp << 4) + 12;
                     "D": temp = (temp << 4) + 13;
                     "E": temp = (temp << 4) + 14;
                     "F": temp = (temp << 4) + 15;
+                    // Lower Case
                     "a": temp = (temp << 4) + 10;
                     "b": temp = (temp << 4) + 11;
                     "c": temp = (temp << 4) + 12;
@@ -59,6 +61,7 @@ begin
                     default: o_err = 1;
                 endcase
             end
+            o_data <= temp;
         end
         else
         begin

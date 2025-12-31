@@ -6,12 +6,12 @@
 #include "unity.h"
 #include "unity_fixture.h"
 
-#include "Vword_to_int.h"
+#include "Vword_to_hex.h"
 
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-Vword_to_int * tb;
+Vword_to_hex * tb;
 extern VerilatedVcdC * trace;
 
 void tick()
@@ -41,13 +41,13 @@ void tick()
     g_tick = g_tick + 1;
 }
 
-TEST_GROUP(word_to_int);
+TEST_GROUP(word_to_hex);
 
 uint32_t added = 0;
 
-TEST_SETUP(word_to_int) 
+TEST_SETUP(word_to_hex) 
 {
-    tb = new Vword_to_int;
+    tb = new Vword_to_hex;
 
     if (added == 0)
     {
@@ -56,62 +56,67 @@ TEST_SETUP(word_to_int)
     }
 }
 
-TEST_TEAR_DOWN(word_to_int)
+TEST_TEAR_DOWN(word_to_hex)
 {
     delete tb;
 }
 
-TEST_GROUP_RUNNER(word_to_int)
+TEST_GROUP_RUNNER(word_to_hex)
 {
-    RUN_TEST_CASE(word_to_int, test_simple);
-    RUN_TEST_CASE(word_to_int, test_max);
-    RUN_TEST_CASE(word_to_int, test_zero);
-    RUN_TEST_CASE(word_to_int, test_empty);
-    RUN_TEST_CASE(word_to_int, test_invalid);
+    RUN_TEST_CASE(word_to_hex, test_simple);
+    RUN_TEST_CASE(word_to_hex, test_max);
+    RUN_TEST_CASE(word_to_hex, test_zero);
+    RUN_TEST_CASE(word_to_hex, test_empty);
+    RUN_TEST_CASE(word_to_hex, test_invalid);
 }
 
-TEST(word_to_int, test_simple)
+TEST(word_to_hex, test_simple)
 {
     trace->open("test_simple.vcd");
 
     tb->i_en = 1;
 
-    tb->i_word[0] = '1';
-    tb->i_word[1] = '0';
-    tb->i_word[2] = '0';
+    tb->i_word[0] = '0';
+    tb->i_word[1] = 'x';
+    tb->i_word[2] = 'A';
+    tb->i_word[3] = 'B';
 
-    tb->i_len = 3;
+    tb->i_len = 4;
 
     tick();
 
-    TEST_ASSERT_EQUAL(0, tb->o_err);
-    TEST_ASSERT_EQUAL(100, tb->o_data);
+    TEST_ASSERT_EQUAL(0,        tb->o_err);
+    TEST_ASSERT_EQUAL_HEX(0xAB, tb->o_data);
 }
 
-TEST(word_to_int, test_max)
+TEST(word_to_hex, test_max)
 {
     tb->i_en = 1;
 
-    uint32_t expected = 0;;
-    for (int i = 0; i < 32; i++)
+    tb->i_word[0] = '0';
+    tb->i_word[1] = 'x';
+
+    uint32_t expected = 0xFFFFFFFF;
+    for (int i = 2; i < 10; i++)
     {
-        expected = expected * 10 + 9;
-        tb->i_word[i] = '9';
+        tb->i_word[i] = 'F';
     }
 
-    tb->i_len = 32;
+    tb->i_len = 10;
 
     tick();
 
     TEST_ASSERT_EQUAL(0, tb->o_err);
-    TEST_ASSERT_EQUAL(expected, tb->o_data);
+    TEST_ASSERT_EQUAL_HEX(expected, tb->o_data);
 }
 
-TEST(word_to_int, test_zero)
+TEST(word_to_hex, test_zero)
 {
     tb->i_en = 1;
     tb->i_word[0] = '0';
-    tb->i_len = 1;
+    tb->i_word[1] = 'x';
+    tb->i_word[2] = '0';
+    tb->i_len = 3;
 
     tick();
 
@@ -119,7 +124,7 @@ TEST(word_to_int, test_zero)
     TEST_ASSERT_EQUAL(0, tb->o_data);
 }
 
-TEST(word_to_int, test_empty)
+TEST(word_to_hex, test_empty)
 {
     tb->i_en = 1;
     tb->i_word[0] = ' ';
@@ -130,7 +135,7 @@ TEST(word_to_int, test_empty)
     TEST_ASSERT_EQUAL(1, tb->o_err);
 }
 
-TEST(word_to_int, test_invalid)
+TEST(word_to_hex, test_invalid)
 {
     tb->i_en = 1;
     tb->i_word[0] = 'T';
