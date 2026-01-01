@@ -10,11 +10,13 @@ parameter  OPCODE     = 16; // OPCODE width
 
 localparam WIDTH_BITS = $clog2(WIDTH) + 1;
 
+input wire i_clk;
+input wire i_en;
 input wire [DATA_WIDTH-1:0] i_word [WIDTH-1:0];
 input wire [WIDTH_BITS - 1:0] i_len;
 
 output reg [OPCODE-1:0] o_opcode; 
-output reg [DATA-1:0] o_opcode; 
+output reg [DATA-1:0] o_data; 
 output reg o_err;
 
 localparam OPCODE_IDLE = 0;
@@ -50,17 +52,15 @@ begin
         end
         else if (i_len == 3)
         begin
-            if ((i_word[0] == "D" && i_word[1] == "U" && i_word[2] == "P")
-              ||(i_word[0] == "d" && i_word[1] == "u" && i_word[2] == "p"))
+            if (i_word[0] == "D" && i_word[1] == "U" && i_word[2] == "P")
             begin
                 o_opcode <= OPCODE_DUP;
                 o_data <= 0;
                 o_err <= 0;
             end
-            else if ((i_word[0] == "R" && i_word[1] == "O" && i_word[2] == "T")
-                   ||(i_word[0] == "r" && i_word[1] == "o" && i_word[2] == "t"))
+            else if (i_word[0] == "R" && i_word[1] == "O" && i_word[2] == "T")
            begin
-                o_opcode <= OPCODE_DUP;
+                o_opcode <= OPCODE_ROT;
                 o_data <= 0;
                 o_err <= 0;
            end
@@ -68,8 +68,7 @@ begin
         end
         else if (i_len == 4)
         begin
-            if ((i_word[0] == "S" && i_word[1] == "W" && i_word[2] == "A" && i_word[3] == "P")
-              ||(i_word[0] == "s" && i_word[1] == "w" && i_word[2] == "a" && i_word[3] == "p"))
+            if (i_word[0] == "S" && i_word[1] == "W" && i_word[2] == "A" && i_word[3] == "P")
             begin
                 o_opcode <= OPCODE_SWAP;
                 o_data <= 0;
