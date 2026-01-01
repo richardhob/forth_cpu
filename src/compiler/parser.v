@@ -10,7 +10,7 @@ module parser(i_clk, i_rst, i_en,
     // To CPU
     o_opcode, o_data, o_ready, o_err,
 
-    d_state, d_word, d_index,
+    d_state, d_word, d_index
 );
 
 localparam DATA_WIDTH = 8; // Character width (also UART width)
@@ -19,9 +19,7 @@ parameter  WIDTH      = 32; // Maximum word width
 parameter  DATA       = 32; // Data Width 
 parameter  OPCODE     = 16; // OPCODE Width 
 
-localparam WIDTH_BITS = $clog2(WIDTH) + 1;
-localparam DATA_BITS = $clog2(DATA) + 1;
-localparam OPCODE_BITS = $clog2(OPCODE) + 1;
+localparam WIDTH_BITS = $clog2(WIDTH);
 
 input wire i_clk;
 input wire i_rst;
@@ -55,10 +53,11 @@ word_to_int #(
     .DATA(DATA)
 ) int_parser (
     .i_clk(i_clk),
+    .i_en(i_en),
     .i_word(d_word),
     .i_len(d_index),
     .o_data(int_data),
-    .o_err(int_err),
+    .o_err(int_err)
 );
 
 wire [DATA-1:0] hex_data;
@@ -69,10 +68,11 @@ word_to_hex #(
     .DATA(DATA)
 ) hex_parser (
     .i_clk(i_clk),
+    .i_en(i_en),
     .i_word(d_word),
     .i_len(d_index),
     .o_data(hex_data),
-    .o_err(hex_err),
+    .o_err(hex_err)
 );
 
 wire [DATA-1:0] opcode_data;
@@ -85,6 +85,7 @@ word_to_opcode #(
     .OPCODE(OPCODE)
 ) opcode_parser (
     .i_clk(i_clk),
+    .i_en(i_en),
     .i_word(d_word),
     .i_len(d_index),
     .o_data(opcode_data),
@@ -115,31 +116,36 @@ begin
             if (1 == i_ready)
             begin
                 o_next <= 0;
-                if (i_wc or i_eol) 
+                if (i_wc || i_eol)
                 begin
-                    // Process
-                    if (0 == int_err)
+                    if (d_index > 0)
                     begin
-                        o_data <= int_data;
-                        o_opcode <= OPCODE_PUSH; 
-                        o_err <= 0;
-                    end
-                    else if (0 == hex_err)
-                    begin
-                        o_data <= hex_data;
-                        o_opcode <= OPCODE_PUSH;
-                        o_err <= 0;
-                    end
-                    else if (0 == opcode_err)
-                    begin
-                        o_data <= opcode_data;
-                        o_opcode <= opcode_opcode;
-                        o_err <= 0;
+                        // Process
+                        d_index <= 0;
+                        if (0 == int_err)
+                        begin
+                            o_data <= int_data;
+                            o_opcode <= OPCODE_PUSH; 
+                            o_err <= 0;
+                        end
+                        else if (0 == hex_err)
+                        begin
+                            o_data <= hex_data;
+                            o_opcode <= OPCODE_PUSH;
+                            o_err <= 0;
+                        end
+                        else if (0 == opcode_err)
+                        begin
+                            o_data <= opcode_data;
+                            o_opcode <= opcode_opcode;
+                            o_err <= 0;
+                        end
                     end
                 end
                 else
                 begin
                     d_word[d_index] = i_data;
+                    d_index = d_index + 1;
                 end
             end
             else 

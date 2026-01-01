@@ -9,14 +9,13 @@ parameter  DATA       = 32; // Data width
 
 localparam PREFIX0 = "0";
 localparam PREFIX1 = "x";
-localparam WIDTH_BITS = $clog2(WIDTH) + 1;
-localparam DATA_BITS = $clog2(DATA) + 1;
+localparam WIDTH_BITS = $clog2(WIDTH);
 
 input wire i_clk;
 input wire i_en;
 
 input wire [DATA_WIDTH-1:0] i_word [WIDTH-1:0];
-input wire [WIDTH_BITS - 1:0] i_len;
+input wire [WIDTH_BITS-1:0] i_len;
 
 output reg [DATA-1:0] o_data; 
 output reg o_err;

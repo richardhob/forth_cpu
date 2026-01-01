@@ -13,7 +13,11 @@ _PROJECTS:=clock_divider\
           uart_rx\
           uart_tx\
           find_index\
-          dict
+          dict\
+          tokenizer\
+          word_to_hex\
+          word_to_int\
+          word_to_opcode
 
 PROJECTS=$(abspath $(_PROJECTS))
 

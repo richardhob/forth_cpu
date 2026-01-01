@@ -8,7 +8,7 @@ parameter  WIDTH      = 32; // Maximum word width
 parameter  DATA       = 32; // DATA width
 parameter  OPCODE     = 16; // OPCODE width
 
-localparam WIDTH_BITS = $clog2(WIDTH) + 1;
+localparam WIDTH_BITS = $clog2(WIDTH);
 
 input wire i_clk;
 input wire i_en;
