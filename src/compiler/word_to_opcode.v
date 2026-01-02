@@ -20,9 +20,7 @@ output reg [DATA-1:0] o_data;
 output reg o_err;
 
 localparam OPCODE_IDLE = 0;
-
 localparam OPCODE_PUSH = 1;
-
 localparam OPCODE_POP = 2;
 localparam OPCODE_ADD = 3;
 localparam OPCODE_SUBTRACT= 4;
