@@ -4,7 +4,7 @@
 // them.
 
 module parser(i_clk, i_rst, i_en,
-    // To tokenizer
+    // From tokenizer
     i_data, i_ready, i_eol, i_wc, o_next, 
 
     // To CPU
