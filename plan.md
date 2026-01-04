@@ -61,3 +61,5 @@ Do work with provided tokens.
 
 ### Output Printing
 
+### Terminal - UART Management
+
