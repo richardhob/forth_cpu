@@ -91,6 +91,8 @@ begin
     begin
         if (STATE_IDLE == d_state)
         begin
+            // This needs to be faster ... Possibly separate RX and TX
+            // Need to check of the i_rx_ready to be 0 before parsing again
             if (i_rx_ready == 1)
             begin
                 if (i_rx_data == 8'h0A // NEWLINE

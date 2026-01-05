@@ -1,5 +1,5 @@
 
-module tokenizer(i_clk, i_rst, i_en, 
+module tokenizerL(i_clk, i_rst, i_en, 
 
     // From Terminal
     i_line, i_len, i_ready, 
